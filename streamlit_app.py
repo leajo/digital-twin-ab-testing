@@ -3057,7 +3057,6 @@ with tab_demo:
 
                 st.session_state["sim_result"] = sim_result
                 st.session_state["scenario_config"] = config
-                st.balloons()
 
             except PipelineError as e:
                 progress_bar.empty()
