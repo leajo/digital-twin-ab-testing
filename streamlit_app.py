@@ -2508,13 +2508,16 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* 본문 — 전체 적용 */
-    p, li, td, th, .stMarkdown p, .stMarkdown li,
-    .stMarkdown td, .stMarkdown th,
+    /* 본문 — 전체 적용 (버튼/입력 요소 제외) */
+    .stMarkdown p, .stMarkdown li,
     [data-testid="stMarkdownContainer"] p,
     [data-testid="stMarkdownContainer"] li {
         font-size: 0.92rem !important;
         line-height: 1.65 !important;
+    }
+    td, th {
+        font-size: 0.88rem !important;
+        line-height: 1.5 !important;
     }
 
     .metric-highlight {
