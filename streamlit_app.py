@@ -7,7 +7,9 @@ import sys
 import os
 
 # Backend 모듈 임포트를 위한 경로 설정
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
+_backend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "backend")
+if _backend_path not in sys.path:
+    sys.path.insert(0, _backend_path)
 
 import streamlit as st
 import pandas as pd
