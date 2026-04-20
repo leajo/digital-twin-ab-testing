@@ -2408,7 +2408,19 @@ st.markdown("""
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
 
     html, body, [class*="css"] {
-        font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+
+    /* Streamlit 내부 요소 전체 폰트 강제 적용 */
+    .stApp, .stApp *, .main, .main *,
+    .stMarkdown, .stMarkdown *,
+    .stTabs, .stTabs *,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stAppViewContainer"] *,
+    .element-container, .element-container *,
+    div, span, p, h1, h2, h3, h4, h5, h6,
+    label, input, select, textarea, button, th, td, li {
+        font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     }
 
     /* 좌상단 서비스명 */
@@ -2481,25 +2493,28 @@ st.markdown("""
         color: #3f51b5;
     }
 
-    /* 섹션 제목 */
-    h2 {
+    /* 섹션 제목 — 전체 적용 */
+    h2, .stMarkdown h2 {
         font-size: 1.3rem !important;
         font-weight: 700 !important;
-        letter-spacing: -0.3px;
+        letter-spacing: -0.3px !important;
     }
-    h3 {
+    h3, .stMarkdown h3 {
         font-size: 1.1rem !important;
         font-weight: 600 !important;
     }
-    h4 {
+    h4, .stMarkdown h4 {
         font-size: 1rem !important;
         font-weight: 600 !important;
     }
 
-    /* 본문 */
-    p, li, td, th, .stMarkdown {
-        font-size: 0.92rem;
-        line-height: 1.65;
+    /* 본문 — 전체 적용 */
+    p, li, td, th, .stMarkdown p, .stMarkdown li,
+    .stMarkdown td, .stMarkdown th,
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] li {
+        font-size: 0.92rem !important;
+        line-height: 1.65 !important;
     }
 
     .metric-highlight {
