@@ -2394,42 +2394,114 @@ def step2_simulate(
 # 페이지 설정
 # ──────────────────────────────────────────────
 st.set_page_config(
-    page_title="Digital Twin A/B Testing",
+    page_title="TwinPilot — Digital Twin A/B Testing",
     page_icon="🧬",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
 # ──────────────────────────────────────────────
-# 커스텀 CSS
+# 커스텀 CSS (Pretendard 폰트 + 브랜딩)
 # ──────────────────────────────────────────────
 st.markdown("""
 <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+
+    html, body, [class*="css"] {
+        font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* 좌상단 서비스명 */
+    .brand-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 0 16px 0;
+        border-bottom: 2px solid #e8eaf6;
+        margin-bottom: 20px;
+    }
+    .brand-name {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #3f51b5;
+        letter-spacing: -0.5px;
+    }
+    .brand-tag {
+        font-size: 0.75rem;
+        color: #999;
+        font-weight: 400;
+        margin-left: 4px;
+    }
+
+    /* 메인 타이틀 */
     .main-title {
-        font-size: 2.5rem;
-        font-weight: 700;
+        font-size: 2.8rem;
+        font-weight: 800;
         background: linear-gradient(135deg, #3f51b5, #7c4dff);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 0.2rem;
+        margin-bottom: 0.3rem;
+        letter-spacing: -1px;
     }
     .subtitle {
-        font-size: 1.15rem;
-        color: #666;
+        font-size: 1.1rem;
+        color: #777;
         margin-bottom: 2rem;
+        font-weight: 400;
+        line-height: 1.6;
     }
+
+    /* 3단 카드 */
     .step-card {
-        background: #f5f7fa;
-        border-radius: 12px;
-        padding: 1.5rem;
+        background: #f8f9fc;
+        border-radius: 14px;
+        padding: 1.8rem 1.2rem;
         text-align: center;
-        border: 1px solid #e0e0e0;
+        border: 1px solid #e8eaf6;
+        transition: box-shadow 0.2s;
+    }
+    .step-card:hover {
+        box-shadow: 0 4px 16px rgba(63, 81, 181, 0.1);
+    }
+    .step-card h4 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin: 0.6rem 0 0.4rem 0;
+        color: #333;
+    }
+    .step-card p {
+        font-size: 0.88rem;
+        color: #666;
+        line-height: 1.5;
+        margin: 0;
     }
     .step-number {
-        font-size: 2rem;
-        font-weight: 700;
+        font-size: 1.8rem;
+        font-weight: 800;
         color: #3f51b5;
     }
+
+    /* 섹션 제목 */
+    h2 {
+        font-size: 1.3rem !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.3px;
+    }
+    h3 {
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+    }
+    h4 {
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+    }
+
+    /* 본문 */
+    p, li, td, th, .stMarkdown {
+        font-size: 0.92rem;
+        line-height: 1.65;
+    }
+
     .metric-highlight {
         font-size: 1.8rem;
         font-weight: 700;
@@ -2440,7 +2512,7 @@ st.markdown("""
         color: white;
         padding: 4px 12px;
         border-radius: 20px;
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         font-weight: 600;
     }
     .badge-not-significant {
@@ -2448,14 +2520,47 @@ st.markdown("""
         color: white;
         padding: 4px 12px;
         border-radius: 20px;
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         font-weight: 600;
     }
     .feature-icon {
-        font-size: 2.5rem;
-        margin-bottom: 0.5rem;
+        font-size: 2.2rem;
+        margin-bottom: 0.4rem;
+    }
+
+    /* 탭 스타일 */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        font-family: 'Pretendard', sans-serif;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    /* 헤더 앵커 링크 숨기기 */
+    h1 a, h2 a, h3 a, h4 a, h5 a, h6 a,
+    .stMarkdown a[href^="#"],
+    [data-testid="stHeaderActionElements"] {
+        display: none !important;
+    }
+
+    /* 데이터프레임 컬럼 소팅 비활성화 */
+    [data-testid="stDataFrame"] th button {
+        display: none !important;
     }
 </style>
+""", unsafe_allow_html=True)
+
+# ──────────────────────────────────────────────
+# 좌상단 브랜드 헤더
+# ──────────────────────────────────────────────
+st.markdown("""
+<div class="brand-header">
+    <span style="font-size:1.5rem;">🧬</span>
+    <span class="brand-name">TwinPilot</span>
+    <span class="brand-tag">Digital Twin A/B Testing</span>
+</div>
 """, unsafe_allow_html=True)
 
 
@@ -2474,9 +2579,9 @@ tab_intro, tab_guide, tab_demo = st.tabs([
 # ══════════════════════════════════════════════
 with tab_intro:
     # Hero
-    st.markdown('<p class="main-title">🧬 Digital Twin A/B Testing</p>', unsafe_allow_html=True)
+    st.markdown('<p class="main-title">TwinPilot</p>', unsafe_allow_html=True)
     st.markdown(
-        '<p class="subtitle">실제 트래픽 없이, 디지털 트윈 시뮬레이션으로 A/B 테스트 결과를 미리 예측하세요.</p>',
+        '<p class="subtitle">실제 트래픽 없이, 디지털 트윈 시뮬레이션으로<br>A/B 테스트 결과를 미리 예측하세요.</p>',
         unsafe_allow_html=True,
     )
     st.divider()
@@ -3274,4 +3379,4 @@ with tab_demo:
 
         st.divider()
         st.markdown("---")
-        st.caption("🧬 Digital Twin A/B Testing | 디지털 트윈 기반 사전 시뮬레이션 플랫폼")
+        st.caption("🧬 TwinPilot | 디지털 트윈 기반 사전 시뮬레이션 플랫폼")
