@@ -1419,16 +1419,10 @@ PAGE_DURATION_MAX = 300
 def assign_variants(
     twins: List[DigitalTwin], variant_count: int
 ) -> Dict[str, List[DigitalTwin]]:
-    """Shuffle twins randomly and distribute evenly across variants."""
-    shuffled = list(twins)
-    random.shuffle(shuffled)
-
+    """모든 트윈이 모든 variant를 테스트하도록 할당한다 (동일 유저 대상 비교)."""
     groups: Dict[str, List[DigitalTwin]] = {
-        f"variant_{i}": [] for i in range(variant_count)
+        f"variant_{i}": list(twins) for i in range(variant_count)
     }
-    for idx, twin in enumerate(shuffled):
-        key = f"variant_{idx % variant_count}"
-        groups[key].append(twin)
     return groups
 
 
@@ -2221,6 +2215,136 @@ def generate_musinsa_scenario_config() -> dict:
 
 
 # ──────────────────────────────────────────────
+# 업종별 샘플 데이터 생성기
+# ──────────────────────────────────────────────
+
+INDUSTRY_CONFIGS = {
+    "패션 이커머스 (무신사)": {
+        "pages": ["/home", "/category/men", "/category/women", "/category/shoes",
+                  "/cart", "/checkout", "/order-complete"],
+        "product_prefix": "product",
+        "categories": ["men", "women", "shoes"],
+        "event_types": ["page_view", "click", "scroll", "purchase", "add_to_cart", "wishlist", "coupon_apply"],
+        "conversion_events": {"purchase", "add_to_cart", "wishlist"},
+        "value_range": (10000, 200000),
+        "description": "패션 이커머스 서비스 (상품 조회, 장바구니, 구매)",
+    },
+    "금융 (은행/증권)": {
+        "pages": ["/home", "/products/deposit", "/products/loan", "/products/fund",
+                  "/apply/start", "/apply/verify", "/apply/complete"],
+        "product_prefix": "fin_product",
+        "categories": ["deposit", "loan", "fund", "insurance"],
+        "event_types": ["page_view", "click", "scroll", "apply_complete", "calculator_use", "document_download", "consultation_request"],
+        "conversion_events": {"apply_complete", "consultation_request"},
+        "value_range": (1000000, 50000000),
+        "description": "금융 서비스 (상품 조회, 금리 계산, 신청 완료)",
+    },
+    "OTT 콘텐츠 (스트리밍)": {
+        "pages": ["/home", "/browse/movie", "/browse/drama", "/browse/variety",
+                  "/content/detail", "/player", "/subscribe"],
+        "product_prefix": "content",
+        "categories": ["movie", "drama", "variety", "documentary"],
+        "event_types": ["page_view", "click", "scroll", "play_start", "play_complete", "add_watchlist", "subscribe"],
+        "conversion_events": {"subscribe", "play_start", "add_watchlist"},
+        "value_range": (7900, 17000),
+        "description": "OTT 스트리밍 서비스 (콘텐츠 탐색, 시청, 구독)",
+    },
+}
+
+
+def generate_industry_sample_data(
+    industry: str, user_count: int = 100, days: int = 30
+) -> List[EventRecord]:
+    """업종별 샘플 이벤트 로그를 생성한다."""
+    config = INDUSTRY_CONFIGS.get(industry)
+    if config is None:
+        return generate_sample_data(user_count, days)
+
+    all_events: List[EventRecord] = []
+    end_date = datetime.now(tz=timezone.utc)
+    start_date = end_date - timedelta(days=days)
+
+    product_ids = [f"{config['product_prefix']}_{i}" for i in range(1, 51)]
+    pages = config["pages"]
+    categories = config["categories"]
+    event_types = config["event_types"]
+    conversion_events = config["conversion_events"]
+    value_lo, value_hi = config["value_range"]
+
+    user_types_list = random.choices(USER_TYPES, weights=USER_TYPE_WEIGHTS, k=user_count)
+
+    for i in range(user_count):
+        user_id = f"user_{i + 1:04d}"
+        user_type = user_types_list[i]
+        device = random.choices(SAMPLE_DEVICES, weights=SAMPLE_DEVICE_WEIGHTS, k=1)[0]
+        os_name = random.choices(SAMPLE_OS_LIST, weights=SAMPLE_OS_WEIGHTS, k=1)[0]
+
+        lo_s, hi_s = SESSION_RANGE[user_type]
+        session_count = random.randint(lo_s, hi_s)
+
+        for _ in range(session_count):
+            session_id = f"sess_{uuid.uuid4().hex[:12]}"
+            session_start = start_date + timedelta(
+                seconds=random.randint(0, int((end_date - start_date).total_seconds()))
+            )
+
+            lo_e, hi_e = EVENTS_PER_SESSION_RANGE[user_type]
+            event_count = random.randint(lo_e, hi_e)
+            current_time = session_start
+            current_page = pages[0]
+
+            for j in range(event_count):
+                current_time = current_time + timedelta(seconds=random.randint(2, 120))
+
+                if j == 0:
+                    page = pages[0]
+                    evt = "page_view"
+                else:
+                    # 간단한 확률 기반 페이지 전이
+                    r = random.random()
+                    if r < 0.3:
+                        page = random.choice(pages)
+                        evt = "page_view"
+                    elif r < 0.5:
+                        page = f"/{config['product_prefix']}/{random.choice(product_ids)}"
+                        evt = "click"
+                    elif r < 0.65:
+                        page = current_page
+                        evt = "scroll"
+                    elif r < 0.8:
+                        evt = random.choice([e for e in event_types if e not in ("page_view", "scroll")])
+                        page = current_page
+                    else:
+                        # 전환 이벤트 (유저 유형에 따라 확률 조절)
+                        if user_type == "impulse" or (user_type == "price_sensitive" and r < 0.9):
+                            conv_events = list(conversion_events)
+                            evt = random.choice(conv_events)
+                            page = pages[-1] if "complete" in pages[-1] else current_page
+                        else:
+                            page = random.choice(pages[1:-1]) if len(pages) > 2 else pages[0]
+                            evt = "page_view"
+
+                category = random.choice(categories) if random.random() < 0.4 else None
+                conversion_type = evt if evt in conversion_events else None
+                value = float(random.randint(value_lo, value_hi)) if evt in conversion_events and "complete" in evt or evt in ("purchase", "subscribe", "apply_complete") else None
+
+                all_events.append(EventRecord(
+                    user_id=user_id, session_id=session_id, event_type=evt,
+                    timestamp=current_time, page=page,
+                    element=_pick_element(evt) if evt in ("click", "add_to_cart", "wishlist", "coupon_apply", "purchase") else None,
+                    element_text=None,
+                    conversion_type=conversion_type, value=value,
+                    device=device, os=os_name,
+                    scroll_depth_pct=round(random.uniform(10, 100), 1) if evt == "scroll" else None,
+                    category=category,
+                ))
+                current_page = page
+
+    all_events.sort(key=lambda e: e.timestamp)
+    return all_events
+
+
+# ──────────────────────────────────────────────
 # Pipeline Orchestrator
 # ──────────────────────────────────────────────
 
@@ -2863,10 +2987,15 @@ with tab_demo:
         )
 
         if data_method == "🎲 샘플 데이터 사용":
-            st.caption("패션 이커머스 가상 데이터 (100명 유저, 30일)")
+            industry = st.selectbox(
+                "업종 선택",
+                options=list(INDUSTRY_CONFIGS.keys()),
+                index=0,
+            )
+            st.caption(INDUSTRY_CONFIGS[industry]["description"])
             if st.button("샘플 데이터 생성 및 분석 시작", use_container_width=True, type="primary"):
                 with st.spinner("샘플 데이터 생성 및 분석 중..."):
-                    events = generate_sample_data(user_count=100, days=30)
+                    events = generate_industry_sample_data(industry, user_count=100, days=30)
                     csv_str = serialize_to_csv(events)
                     csv_bytes = csv_str.encode("utf-8")
                     upload_result = step1_upload(csv_bytes, "sample_data.csv")
@@ -2874,6 +3003,7 @@ with tab_demo:
                     st.session_state["csv_bytes"] = csv_bytes
                     st.session_state["csv_str"] = csv_str
                     st.session_state["data_source"] = "sample"
+                    st.session_state["industry"] = industry
                     st.session_state.pop("sim_result", None)
                 st.rerun()
 
@@ -2964,42 +3094,53 @@ with tab_demo:
 
         sample_config = generate_musinsa_scenario_config() if use_sample_scenario else None
 
-        col_sc1, col_sc2 = st.columns(2)
-        with col_sc1:
+        # Row 1: 시나리오 이름 — 시나리오 유형
+        col_r1a, col_r1b = st.columns(2)
+        with col_r1a:
             scenario_name = st.text_input(
                 "시나리오 이름",
                 value=sample_config["scenario_name"] if sample_config else "",
                 placeholder="예: 홈페이지 프로모션 A/B 테스트",
             )
+        with col_r1b:
             scenario_type = st.selectbox(
                 "시나리오 유형",
                 options=["promotion", "cta_change", "price_display", "funnel_change", "ui_position", "timing"],
                 index=0 if sample_config else 0,
             )
+
+        # Row 2: 시나리오 설명 (A — B)
+        st.markdown("**시나리오 설명**")
+        col_r2a, col_r2b = st.columns(2)
+        with col_r2a:
+            variant_a_desc = st.text_input(
+                "Variant A (Control)",
+                value=sample_config["variants"][0]["description"] if sample_config else "",
+                placeholder="예: 현재 홈페이지 디자인",
+            )
+        with col_r2b:
+            variant_b_desc = st.text_input(
+                "Variant B (Treatment)",
+                value=sample_config["variants"][1]["description"] if sample_config else "",
+                placeholder="예: 새로운 프로모션 배너 적용",
+            )
+
+        # Row 3: 타겟 페이지 — 트윈 수
+        col_r3a, col_r3b = st.columns(2)
+        with col_r3a:
             target_page = st.text_input(
                 "타겟 페이지",
                 value=sample_config["target_page"] if sample_config else "/home",
                 placeholder="예: /home, /product/123",
             )
-
-        with col_sc2:
-            variant_a_desc = st.text_input(
-                "Variant A (Control) 설명",
-                value=sample_config["variants"][0]["description"] if sample_config else "",
-                placeholder="예: 현재 홈페이지 디자인",
-            )
-            variant_b_desc = st.text_input(
-                "Variant B (Treatment) 설명",
-                value=sample_config["variants"][1]["description"] if sample_config else "",
-                placeholder="예: 새로운 프로모션 배너 적용",
-            )
+        with col_r3b:
             twin_count = st.slider(
                 "트윈 수",
                 min_value=100,
                 max_value=10000,
                 value=sample_config["twin_count"] if sample_config else 1000,
                 step=100,
-                help="생성할 디지털 트윈 수. 많을수록 정확하지만 시간이 더 걸립니다.",
+                help="생성할 디지털 트윈 수. 동일한 트윈이 A/B 모두 테스트합니다.",
             )
 
         # 시뮬레이션 실행 버튼
