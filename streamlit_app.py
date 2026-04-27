@@ -3110,19 +3110,23 @@ with tab_demo:
             )
 
         # Row 2: 시나리오 설명 (A — B)
-        st.markdown("**시나리오 설명**")
+        st.markdown("시나리오 설명")
         col_r2a, col_r2b = st.columns(2)
         with col_r2a:
+            st.markdown('<p style="font-size:0.82rem; color:#888; margin-bottom:2px;">Variant A (Control)</p>', unsafe_allow_html=True)
             variant_a_desc = st.text_input(
                 "Variant A (Control)",
                 value=sample_config["variants"][0]["description"] if sample_config else "",
                 placeholder="예: 현재 홈페이지 디자인",
+                label_visibility="collapsed",
             )
         with col_r2b:
+            st.markdown('<p style="font-size:0.82rem; color:#888; margin-bottom:2px;">Variant B (Treatment)</p>', unsafe_allow_html=True)
             variant_b_desc = st.text_input(
                 "Variant B (Treatment)",
                 value=sample_config["variants"][1]["description"] if sample_config else "",
                 placeholder="예: 새로운 프로모션 배너 적용",
+                label_visibility="collapsed",
             )
 
         # Row 3: 타겟 페이지 — 트윈 수
