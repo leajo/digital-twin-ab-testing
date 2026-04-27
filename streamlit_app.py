@@ -2593,6 +2593,102 @@ def step2_simulate(
     )
 
 
+# ──────────────────────────────────────────────
+# 인사이트 생성 + 리포트 다운로드
+# ──────────────────────────────────────────────
+
+def generate_insights(report) -> List[str]:
+    """결과 리포트에서 자동 인사이트를 생성한다."""
+    insights = []
+    variant_ids = sorted(report.variant_metrics.keys())
+    if len(variant_ids) < 2:
+        return insights
+
+    vr_a = report.variant_metrics.get("variant_a")
+    vr_b = report.variant_metrics.get("variant_b")
+    if not vr_a or not vr_b:
+        return insights
+
+    # 전환율 비교
+    diff = abs(vr_a.conversion_rate - vr_b.conversion_rate) * 100
+    better = "시나리오 A" if vr_a.conversion_rate > vr_b.conversion_rate else "시나리오 B"
+    worse = "시나리오 B" if better == "시나리오 A" else "시나리오 A"
+    insights.append(f"📊 **{better}**가 {worse} 대비 전환율이 **{diff:.1f}%p** 높습니다.")
+
+    # 세그먼트별 인사이트
+    if report.segment_heatmap:
+        best_diff = 0
+        best_seg = ""
+        best_variant = ""
+        for sa in report.segment_heatmap:
+            rates = {}
+            for vid, vr in sa.variant_results.items():
+                label = "시나리오 A" if vid == "variant_a" else "시나리오 B"
+                rates[label] = vr.conversion_rate
+            if len(rates) == 2:
+                vals = list(rates.values())
+                seg_diff = abs(vals[0] - vals[1])
+                if seg_diff > best_diff:
+                    best_diff = seg_diff
+                    best_seg = sa.segment_label
+                    best_variant = max(rates, key=rates.get)
+        if best_seg:
+            insights.append(f"🎯 **{best_seg}** 세그먼트에서 시나리오 간 차이가 가장 크며, **{best_variant}**가 {best_diff * 100:.1f}%p 우세합니다.")
+
+        # 세그먼트별 최적 시나리오가 다른 경우
+        a_wins = sum(1 for sa in report.segment_heatmap if sa.best_variant == "variant_a")
+        b_wins = sum(1 for sa in report.segment_heatmap if sa.best_variant == "variant_b")
+        total_segs = len(report.segment_heatmap)
+        if a_wins > 0 and b_wins > 0:
+            insights.append(f"🔀 세그먼트별로 최적 시나리오가 다릅니다: 시나리오 A가 {a_wins}개, 시나리오 B가 {b_wins}개 세그먼트에서 우세합니다. **세그먼트별 차별 적용**을 고려해보세요.")
+
+    # 통계적 유의성
+    if report.overall_statistics:
+        if report.overall_statistics.is_significant:
+            insights.append(f"✅ 통계적으로 유의미한 차이가 확인되었습니다 (p={report.overall_statistics.p_value:.4f}). 결과를 신뢰할 수 있습니다.")
+        else:
+            insights.append(f"⚠️ 통계적으로 유의미한 차이가 없습니다 (p={report.overall_statistics.p_value:.4f}). 트윈 수를 늘리거나 시나리오를 조정해보세요.")
+
+    return insights
+
+
+def generate_report_csv(report) -> str:
+    """결과 리포트를 CSV 문자열로 변환한다."""
+    lines = []
+    lines.append("=== 실험 요약 ===")
+    lines.append(f"결론,{report.summary.one_line_conclusion}")
+    lines.append(f"추천,{report.summary.recommendation}")
+    lines.append(f"통계적 유의성,{'유의미' if report.summary.is_significant else '유의미하지 않음'}")
+    lines.append("")
+
+    lines.append("=== 핵심 지표 비교 ===")
+    lines.append("시나리오,트윈 수,전환 수,전환율(%),가중 전환율(%),평균 세션(초)")
+    for vid in sorted(report.variant_metrics.keys()):
+        vr = report.variant_metrics[vid]
+        wcr = report.weighted_conversion_rates.get(vid, 0)
+        label = "시나리오 A" if vid == "variant_a" else "시나리오 B"
+        lines.append(f"{label},{vr.total_twins},{vr.conversions},{vr.conversion_rate * 100:.2f},{wcr * 100:.2f},{vr.avg_session_duration:.1f}")
+    lines.append("")
+
+    lines.append("=== 세그먼트별 전환율 ===")
+    lines.append("세그먼트,시나리오,전환율(%),전환 수,트윈 수")
+    for sa in report.segment_heatmap:
+        for vid, vr in sa.variant_results.items():
+            label = "시나리오 A" if vid == "variant_a" else "시나리오 B"
+            lines.append(f"{sa.segment_label},{label},{vr.conversion_rate * 100:.2f},{vr.conversions},{vr.total_twins}")
+    lines.append("")
+
+    if report.overall_statistics:
+        lines.append("=== 통계 검정 ===")
+        cs = report.overall_statistics
+        lines.append(f"카이제곱 통계량,{cs.chi2_statistic:.4f}")
+        lines.append(f"p-value,{cs.p_value:.4f}")
+        lines.append(f"Cohen's h,{cs.cohens_h:.4f}")
+        lines.append(f"유의성,{'유의미' if cs.is_significant else '유의미하지 않음'}")
+
+    return "\n".join(lines)
+
+
 # ═══════════════════════════════════════════════════════════════════
 # === STREAMLIT UI ===
 # ═══════════════════════════════════════════════════════════════════
@@ -3317,6 +3413,25 @@ with tab_demo:
             st.session_state.pop("sim_result", None)
             st.rerun()
 
+        # 리포트 다운로드 버튼
+        report_csv = generate_report_csv(report)
+        st.download_button(
+            label="📥 리포트 CSV 다운로드",
+            data=report_csv,
+            file_name="twinpilot_report.csv",
+            mime="text/csv",
+        )
+
+        st.divider()
+
+        # 자동 인사이트
+        insights = generate_insights(report)
+        if insights:
+            st.subheader("💡 핵심 인사이트")
+            for insight in insights:
+                st.markdown(insight)
+            st.divider()
+
         # 실험 요약
         st.subheader("3. 실험 결과")
         summary = report.summary
@@ -3356,6 +3471,15 @@ with tab_demo:
                 fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
                 fig.update_layout(height=400)
                 st.plotly_chart(fig, use_container_width=True)
+
+                # 세그먼트별 인사이트
+                for sa in report.segment_heatmap:
+                    rates = {("A" if vid == "variant_a" else "B"): vr.conversion_rate for vid, vr in sa.variant_results.items()}
+                    if len(rates) == 2:
+                        better_s = max(rates, key=rates.get)
+                        diff_s = abs(rates.get("A", 0) - rates.get("B", 0)) * 100
+                        if diff_s > 1:
+                            st.caption(f"→ {sa.segment_label}: 시나리오 {better_s}가 {diff_s:.1f}%p 우세")
             else:
                 st.info("세그먼트 분석 데이터가 없습니다.")
 
