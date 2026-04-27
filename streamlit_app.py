@@ -2612,31 +2612,60 @@ st.markdown("""
         color: #3f51b5;
     }
 
-    /* 섹션 제목 — Markdown 영역만 적용 */
-    .stMarkdown h2 {
-        font-size: 1.3rem;
+    /* 섹션 제목 — 자연스러운 크기 계층 */
+    .stMarkdown h1 {
+        font-size: 1.6rem;
+        font-weight: 800;
+        margin-top: 0.8rem;
+        margin-bottom: 0.6rem;
+    }
+    .stMarkdown h2, [data-testid="stHeadingWithActionElements"] {
+        font-size: 1.2rem;
         font-weight: 700;
+        margin-top: 0.6rem;
+        margin-bottom: 0.4rem;
         letter-spacing: -0.3px;
     }
     .stMarkdown h3 {
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         font-weight: 600;
+        margin-top: 0.5rem;
+        margin-bottom: 0.3rem;
     }
     .stMarkdown h4 {
-        font-size: 1rem;
+        font-size: 0.95rem;
         font-weight: 600;
+        margin-top: 0.4rem;
+        margin-bottom: 0.2rem;
+        color: #444;
     }
 
-    /* 본문 — 전체 적용 (버튼/입력 요소 제외) */
-    .stMarkdown p, .stMarkdown li,
-    [data-testid="stMarkdownContainer"] p,
-    [data-testid="stMarkdownContainer"] li {
-        font-size: 0.92rem !important;
-        line-height: 1.65 !important;
+    /* 본문 */
+    .stMarkdown p, [data-testid="stMarkdownContainer"] p {
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin-bottom: 0.5rem;
     }
     td, th {
-        font-size: 0.88rem !important;
-        line-height: 1.5 !important;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
+    /* 영역 간격 */
+    .stDivider {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+    [data-testid="stVerticalBlock"] > div {
+        margin-bottom: 0.3rem;
+    }
+    .stSubheader {
+        margin-top: 0.5rem;
+    }
+
+    /* 탭 내부 간격 */
+    .stTabs [data-baseweb="tab-panel"] {
+        padding-top: 0.8rem;
     }
 
     .metric-highlight {
