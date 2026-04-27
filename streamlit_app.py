@@ -3331,7 +3331,15 @@ with tab_demo:
             col_m3.metric("프로파일", f"{ur.profile_count:,}")
             col_m4.metric("세그먼트", f"{ur.base_segment_count}")
 
-        st.subheader("2. 시나리오 설정")
+        # 타이틀 + 우측 데이터 다시 선택
+        col_t2, col_back2 = st.columns([4, 1])
+        with col_t2:
+            st.subheader("2. 시나리오 설정")
+        with col_back2:
+            if st.button("↩️ 데이터 다시 선택", key="back_to_data"):
+                for key in ["upload_result", "sim_result", "csv_bytes", "csv_str", "data_source"]:
+                    st.session_state.pop(key, None)
+                st.rerun()
 
         use_sample_scenario = False
         if st.session_state.get("data_source") == "sample":
@@ -3364,15 +3372,11 @@ with tab_demo:
         with col_r3b:
             twin_count = st.slider("트윈 수", min_value=100, max_value=10000, value=sample_config["twin_count"] if sample_config else 1000, step=100, help="동일한 트윈이 A, B 모두 테스트합니다.")
 
-        col_btn1, col_btn2 = st.columns(2)
-        with col_btn1:
-            if st.button("↩️ 데이터 다시 선택"):
-                for key in ["upload_result", "sim_result", "csv_bytes", "csv_str", "data_source"]:
-                    st.session_state.pop(key, None)
-                st.rerun()
-        with col_btn2:
-            can_run = bool(scenario_name and variant_a_desc and variant_b_desc and target_page)
-            if st.button("▶️ 시뮬레이션 실행", type="primary", disabled=not can_run):
+        # 하단 중앙 실행 버튼
+        can_run = bool(scenario_name and variant_a_desc and variant_b_desc and target_page)
+        col_empty1, col_run, col_empty2 = st.columns([1, 2, 1])
+        with col_run:
+            if st.button("▶️ 시뮬레이션 실행", type="primary", disabled=not can_run, use_container_width=True):
                 variants = [
                     {"variant_id": "variant_a", "name": "시나리오 A", "description": variant_a_desc, "target_page": target_page, "changes": {}},
                     {"variant_id": "variant_b", "name": "시나리오 B", "description": variant_b_desc, "target_page": target_page, "changes": {}},
@@ -3387,20 +3391,15 @@ with tab_demo:
                     analysis_tags=analysis_tags if analysis_tags else None,
                     analysis_dimensions=analysis_dimensions if analysis_dimensions else None,
                 )
-                progress_bar = st.progress(0, text="시뮬레이션 준비 중...")
-                try:
-                    progress_bar.progress(20, text="세그먼트 재클러스터링...")
-                    progress_bar.progress(50, text="디지털 트윈 생성 및 시뮬레이션...")
-                    sim_result = step2_simulate(config=config, events=ur.events, profiles=ur.profiles, base_segments=ur.base_segments)
-                    progress_bar.progress(100, text="완료!")
-                    st.session_state["sim_result"] = sim_result
-                    st.rerun()
-                except PipelineError as e:
-                    progress_bar.empty()
-                    st.error(f"시뮬레이션 실패 [{e.stage}]: {e.message}")
-                except Exception as e:
-                    progress_bar.empty()
-                    st.error(f"오류 발생: {e}")
+                with st.spinner("시뮬레이션 실행 중..."):
+                    try:
+                        sim_result = step2_simulate(config=config, events=ur.events, profiles=ur.profiles, base_segments=ur.base_segments)
+                        st.session_state["sim_result"] = sim_result
+                        st.rerun()
+                    except PipelineError as e:
+                        st.error(f"시뮬레이션 실패 [{e.stage}]: {e.message}")
+                    except Exception as e:
+                        st.error(f"오류 발생: {e}")
 
     # ══════════════════════════════════════
     # STEP 3
@@ -3409,31 +3408,35 @@ with tab_demo:
         sim = st.session_state["sim_result"]
         report = sim.report
 
-        if st.button("↩️ 새 시나리오로 다시 테스트"):
-            st.session_state.pop("sim_result", None)
-            st.rerun()
-
-        # 리포트 다운로드 버튼
-        report_csv = generate_report_csv(report)
-        st.download_button(
-            label="📥 리포트 CSV 다운로드",
-            data=report_csv,
-            file_name="twinpilot_report.csv",
-            mime="text/csv",
-        )
+        # 리포트 다운로드 + 새 시나리오 버튼은 아래에서 처리
 
         st.divider()
+
+        # 실험 결과 타이틀 + 우측 액션 버튼
+        col_title, col_actions = st.columns([3, 2])
+        with col_title:
+            st.subheader("3. 실험 결과")
+        with col_actions:
+            report_csv = generate_report_csv(report)
+            col_a1, col_a2 = st.columns(2)
+            with col_a1:
+                if st.button("↩️ 다시 테스트", key="back_to_scenario"):
+                    st.session_state.pop("sim_result", None)
+                    st.rerun()
+            with col_a2:
+                st.download_button(
+                    label="📥 CSV 다운로드",
+                    data=report_csv,
+                    file_name="twinpilot_report.csv",
+                    mime="text/csv",
+                )
 
         # 자동 인사이트
         insights = generate_insights(report)
         if insights:
-            st.subheader("💡 핵심 인사이트")
             for insight in insights:
                 st.markdown(insight)
             st.divider()
-
-        # 실험 요약
-        st.subheader("3. 실험 결과")
         summary = report.summary
         col_sum1, col_sum2 = st.columns([3, 1])
         with col_sum1:
