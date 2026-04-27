@@ -2964,6 +2964,36 @@ st.markdown("""
     .streamlit-expanderHeader {
         font-size: 0.9rem;
     }
+
+    /* 텍스트형 버튼 (back_to_data, back_to_scenario, csv 다운로드) */
+    [data-testid="stButton"][key="back_to_data"] button,
+    [data-testid="stButton"][key="back_to_scenario"] button,
+    button[kind="secondary"] {
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #888 !important;
+        font-size: 0.82rem !important;
+        padding: 4px 8px !important;
+        text-decoration: underline !important;
+    }
+    button[kind="secondary"]:hover {
+        color: #3f51b5 !important;
+    }
+
+    /* 다운로드 버튼도 텍스트형으로 */
+    [data-testid="stDownloadButton"] button {
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #888 !important;
+        font-size: 0.82rem !important;
+        padding: 4px 8px !important;
+        text-decoration: underline !important;
+    }
+    [data-testid="stDownloadButton"] button:hover {
+        color: #3f51b5 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -3409,8 +3439,6 @@ with tab_demo:
         report = sim.report
 
         # 리포트 다운로드 + 새 시나리오 버튼은 아래에서 처리
-
-        st.divider()
 
         # 실험 결과 타이틀 + 우측 액션 버튼
         col_title, col_actions = st.columns([3, 2])
