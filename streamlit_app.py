@@ -1026,12 +1026,32 @@ def recluster_for_scenario(
         cluster_map.setdefault(int(label), []).append(active_profiles[idx])
 
     segments: List[Segment] = []
-    vars_label = "+".join(key_variables[:3])
 
+    # 자연어 라벨 생성
     for cluster_label in sorted(cluster_map.keys()):
         members = cluster_map[cluster_label]
         summary = generate_segment_summary(members)
-        seg_label = f"scenario_{vars_label}_c{cluster_label}"
+
+        # 특성 기반 자연어 라벨
+        parts = []
+        if summary.avg_conversion_rate >= 0.15:
+            parts.append("고전환")
+        elif summary.avg_conversion_rate >= 0.05:
+            parts.append("중전환")
+        else:
+            parts.append("저전환")
+
+        if summary.avg_pages_per_session >= 5:
+            parts.append("탐색형")
+        elif summary.avg_pages_per_session <= 2:
+            parts.append("즉결형")
+
+        parts.append(summary.primary_device)
+
+        if summary.avg_bounce_rate >= 0.5:
+            parts.append("이탈위험")
+
+        seg_label = " · ".join(parts) + f" (그룹 {cluster_label + 1})"
         centroid = km.cluster_centers_[cluster_label].tolist()
 
         segment = Segment(
@@ -1491,7 +1511,7 @@ def run_simulation(
         variant_twin_map[vid] = groups.get(f"variant_{idx}", [])
 
     session_results: List[SessionResult] = []
-    total = len(twins)
+    total = len(twins) * variant_count
     processed = 0
 
     for vid, group_twins in variant_twin_map.items():
@@ -3311,6 +3331,14 @@ with tab_demo:
                 st.info("퍼널 데이터가 없습니다.")
 
         with tab_stats:
+            st.markdown("""
+            **통계 검정이란?** 두 시나리오의 전환율 차이가 우연이 아닌 실제 차이인지를 수학적으로 검증하는 과정입니다.
+            - **p-value**: 0.05 미만이면 "두 시나리오 간 차이가 통계적으로 유의미하다"고 판단합니다.
+            - **Cohen's h**: 차이의 크기를 나타냅니다. 0.2 미만은 작은 차이, 0.5 이상은 큰 차이입니다.
+            - **95% 신뢰구간**: 전환율이 이 범위 안에 있을 확률이 95%라는 뜻입니다.
+            """)
+            st.divider()
+
             chi_sq = report.overall_statistics
             if chi_sq:
                 col_st1, col_st2, col_st3, col_st4 = st.columns(4)
