@@ -2612,28 +2612,32 @@ st.markdown("""
         color: #3f51b5;
     }
 
-    /* 섹션 제목 — 본문 대비 1.3배 기준 */
+    /* 섹션 제목 — 본문 대비 1.15배 기준 */
     .stMarkdown h1 {
-        font-size: 1.3rem;
-        font-weight: 700;
-        margin-top: 0.5rem;
-        margin-bottom: 0.4rem;
-    }
-    .stMarkdown h2, [data-testid="stHeadingWithActionElements"] {
-        font-size: 1.15rem;
+        font-size: 1.1rem;
         font-weight: 700;
         margin-top: 0.4rem;
         margin-bottom: 0.3rem;
+    }
+    .stMarkdown h2, [data-testid="stHeadingWithActionElements"] {
+        font-size: 1.0rem;
+        font-weight: 700;
+        margin-top: 0.3rem;
+        margin-bottom: 0.25rem;
         letter-spacing: -0.3px;
     }
+    /* st.subheader 강제 축소 */
+    [data-testid="stSubheader"], .stSubheader {
+        font-size: 1.0rem !important;
+    }
     .stMarkdown h3 {
-        font-size: 1.0rem;
+        font-size: 0.95rem;
         font-weight: 600;
-        margin-top: 0.3rem;
+        margin-top: 0.25rem;
         margin-bottom: 0.2rem;
     }
     .stMarkdown h4 {
-        font-size: 0.92rem;
+        font-size: 0.9rem;
         font-weight: 600;
         margin-top: 0.2rem;
         margin-bottom: 0.15rem;
