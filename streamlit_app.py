@@ -2243,6 +2243,55 @@ def generate_musinsa_scenario_config() -> dict:
     }
 
 
+def generate_finance_scenario_config() -> dict:
+    """금융 업종 샘플 시나리오."""
+    return {
+        "scenario_name": "금융 상품 신청 퍼널 A/B 테스트",
+        "scenario_type": "funnel_change",
+        "target_page": "/apply/start",
+        "variants": [
+            {"variant_id": "variant_a", "name": "시나리오 A", "description": "3단계 신청 프로세스 (정보입력 → 본인인증 → 완료)", "target_page": "/apply/start", "changes": {}},
+            {"variant_id": "variant_b", "name": "시나리오 B", "description": "1페이지 간소화 신청 (정보입력+본인인증 통합)", "target_page": "/apply/start", "changes": {}},
+        ],
+        "reaction_rules": [],
+        "primary_metric": "apply_conversion_rate",
+        "twin_count": 1000,
+        "analysis_tags": ["device", "visit_frequency"],
+        "analysis_dimensions": [
+            {"tag_name": "device", "source_attribute": "demographics.primary_device", "classification_rules": None},
+            {"tag_name": "visit_frequency", "source_attribute": "behavior.total_sessions", "classification_rules": {"heavy": ">=10", "light": "<10"}},
+        ],
+    }
+
+
+def generate_ott_scenario_config() -> dict:
+    """OTT 콘텐츠 업종 샘플 시나리오."""
+    return {
+        "scenario_name": "OTT 구독 전환 프로모션 A/B 테스트",
+        "scenario_type": "promotion",
+        "target_page": "/subscribe",
+        "variants": [
+            {"variant_id": "variant_a", "name": "시나리오 A", "description": "첫 달 무료 체험 후 월 9,900원", "target_page": "/subscribe", "changes": {}},
+            {"variant_id": "variant_b", "name": "시나리오 B", "description": "연간 구독 30% 할인 (월 6,900원)", "target_page": "/subscribe", "changes": {}},
+        ],
+        "reaction_rules": [],
+        "primary_metric": "subscribe_conversion_rate",
+        "twin_count": 1000,
+        "analysis_tags": ["device", "visit_frequency"],
+        "analysis_dimensions": [
+            {"tag_name": "device", "source_attribute": "demographics.primary_device", "classification_rules": None},
+            {"tag_name": "visit_frequency", "source_attribute": "behavior.total_sessions", "classification_rules": {"heavy": ">=10", "light": "<10"}},
+        ],
+    }
+
+
+INDUSTRY_SCENARIO_MAP = {
+    "패션 이커머스 (무신사)": generate_musinsa_scenario_config,
+    "금융 (은행/증권)": generate_finance_scenario_config,
+    "OTT 콘텐츠 (스트리밍)": generate_ott_scenario_config,
+}
+
+
 # ──────────────────────────────────────────────
 # 업종별 샘플 데이터 생성기
 # ──────────────────────────────────────────────
@@ -3186,7 +3235,12 @@ with tab_demo:
         use_sample_scenario = False
         if st.session_state.get("data_source") == "sample":
             use_sample_scenario = st.checkbox("샘플 시나리오 자동 채우기", value=True)
-        sample_config = generate_musinsa_scenario_config() if use_sample_scenario else None
+
+        sample_config = None
+        if use_sample_scenario:
+            industry = st.session_state.get("industry", "패션 이커머스 (무신사)")
+            config_fn = INDUSTRY_SCENARIO_MAP.get(industry, generate_musinsa_scenario_config)
+            sample_config = config_fn()
 
         col_r1a, col_r1b = st.columns(2)
         with col_r1a:
@@ -3280,7 +3334,7 @@ with tab_demo:
         for vid in variant_ids:
             vr = report.variant_metrics[vid]
             wcr = report.weighted_conversion_rates.get(vid, 0)
-            label = "시나리오 A" if "a" in vid else "시나리오 B"
+            label = "시나리오 A" if vid == "variant_a" else "시나리오 B"
             metrics_data.append({"시나리오": label, "트윈 수": vr.total_twins, "전환 수": vr.conversions, "전환율 (%)": round(vr.conversion_rate * 100, 2), "가중 전환율 (%)": round(wcr * 100, 2), "평균 세션 (초)": round(vr.avg_session_duration, 1)})
         st.dataframe(pd.DataFrame(metrics_data), use_container_width=True, hide_index=True)
 
@@ -3292,7 +3346,7 @@ with tab_demo:
                 heatmap_data = []
                 for sa in report.segment_heatmap:
                     for vid, vr in sa.variant_results.items():
-                        heatmap_data.append({"세그먼트": sa.segment_label, "시나리오": "A" if "a" in vid else "B", "전환율 (%)": round(vr.conversion_rate * 100, 2)})
+                        heatmap_data.append({"세그먼트": sa.segment_label, "시나리오": "A" if vid == "variant_a" else "B", "전환율 (%)": round(vr.conversion_rate * 100, 2)})
                 fig = px.bar(pd.DataFrame(heatmap_data), x="세그먼트", y="전환율 (%)", color="시나리오", barmode="group", text="전환율 (%)", color_discrete_map={"A": "#3f51b5", "B": "#ff5722"})
                 fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
                 fig.update_layout(height=400)
@@ -3307,7 +3361,7 @@ with tab_demo:
                     tag_data = []
                     for tg in tag_groups:
                         for vid, vr in tg.variant_results.items():
-                            tag_data.append({"그룹": tg.group_value, "시나리오": "A" if "a" in vid else "B", "전환율 (%)": round(vr.conversion_rate * 100, 2)})
+                            tag_data.append({"그룹": tg.group_value, "시나리오": "A" if vid == "variant_a" else "B", "전환율 (%)": round(vr.conversion_rate * 100, 2)})
                     if tag_data:
                         fig = px.bar(pd.DataFrame(tag_data), x="그룹", y="전환율 (%)", color="시나리오", barmode="group", text="전환율 (%)", color_discrete_map={"A": "#3f51b5", "B": "#ff5722"})
                         fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
@@ -3329,7 +3383,7 @@ with tab_demo:
                     funnel_data = []
                     for vid in variant_ids:
                         funnel = report.funnel_comparison.get(vid, {})
-                        label = "A" if "a" in vid else "B"
+                        label = "A" if vid == "variant_a" else "B"
                         for page in ordered_pages:
                             drop_rate = funnel.get(page, 0)
                             funnel_data.append({"페이지": page, "시나리오": label, "도달률 (%)": round((1 - drop_rate) * 100, 1)})
@@ -3359,8 +3413,8 @@ with tab_demo:
                     fig_ci = go.Figure()
                     for vid, (lower, upper) in chi_sq.confidence_intervals.items():
                         mid = (lower + upper) / 2
-                        label = "A" if "a" in vid else "B"
-                        color = "#3f51b5" if "a" in vid else "#ff5722"
+                        label = "A" if vid == "variant_a" else "B"
+                        color = "#3f51b5" if vid == "variant_a" else "#ff5722"
                         fig_ci.add_trace(go.Scatter(x=[mid * 100], y=[label], error_x=dict(type="data", symmetric=False, array=[(upper - mid) * 100], arrayminus=[(mid - lower) * 100]), mode="markers", marker=dict(size=12, color=color), name=label))
                     fig_ci.update_layout(height=200, xaxis_title="전환율 (%)", title="95% 신뢰구간")
                     st.plotly_chart(fig_ci, use_container_width=True)
@@ -3385,7 +3439,7 @@ with tab_demo:
                     rates = {}
                     if sa_match:
                         for vid, vr in sa_match.variant_results.items():
-                            k = "A 전환율 (%)" if "a" in vid else "B 전환율 (%)"
+                            k = "A 전환율 (%)" if vid == "variant_a" else "B 전환율 (%)"
                             rates[k] = round(vr.conversion_rate * 100, 2)
                     best_data.append({"세그먼트": label, "최적 시나리오": best_label, **rates})
                 st.dataframe(pd.DataFrame(best_data), use_container_width=True, hide_index=True)
