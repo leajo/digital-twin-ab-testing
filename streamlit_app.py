@@ -3110,22 +3110,22 @@ with tab_demo:
             )
 
         # Row 2: 시나리오 설명 (A — B)
-        st.markdown("시나리오 설명")
+        st.markdown('<p style="margin-bottom:-10px;">시나리오 설명</p>', unsafe_allow_html=True)
         col_r2a, col_r2b = st.columns(2)
         with col_r2a:
-            st.markdown('<p style="font-size:0.82rem; color:#888; margin-bottom:2px;">Variant A (Control)</p>', unsafe_allow_html=True)
+            st.markdown('<p style="font-size:0.82rem; color:#888; margin-bottom:2px;">시나리오 A</p>', unsafe_allow_html=True)
             variant_a_desc = st.text_input(
-                "Variant A (Control)",
+                "시나리오 A",
                 value=sample_config["variants"][0]["description"] if sample_config else "",
-                placeholder="예: 현재 홈페이지 디자인",
+                placeholder="예: 오늘만 전제품 20% 할인",
                 label_visibility="collapsed",
             )
         with col_r2b:
-            st.markdown('<p style="font-size:0.82rem; color:#888; margin-bottom:2px;">Variant B (Treatment)</p>', unsafe_allow_html=True)
+            st.markdown('<p style="font-size:0.82rem; color:#888; margin-bottom:2px;">시나리오 B</p>', unsafe_allow_html=True)
             variant_b_desc = st.text_input(
-                "Variant B (Treatment)",
+                "시나리오 B",
                 value=sample_config["variants"][1]["description"] if sample_config else "",
-                placeholder="예: 새로운 프로모션 배너 적용",
+                placeholder="예: 오늘만 무료배송 + 5% 적립금 제공",
                 label_visibility="collapsed",
             )
 
