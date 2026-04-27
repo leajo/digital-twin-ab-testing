@@ -1499,6 +1499,7 @@ def run_simulation(
     twins: List[DigitalTwin],
     models: Dict[str, MarkovChainModel],
     reaction_model: ReactionModel,
+    segments: Optional[List[Segment]] = None,
 ) -> SimulationResult:
     """Run a full simulation: assign variants, simulate sessions, aggregate."""
     variant_count = len(scenario.variants)
@@ -1524,8 +1525,13 @@ def run_simulation(
             session_results.append(result)
             processed += 1
 
+    # 세그먼트 라벨 매핑
+    seg_label_map: Dict[str, str] = {}
+    if segments:
+        seg_label_map = {s.segment_id: s.label for s in segments}
+
     variant_results = _aggregate_variant_results(session_results, variant_ids)
-    segment_analyses = _compute_segment_analyses(session_results, twins, variant_ids)
+    segment_analyses = _compute_segment_analyses(session_results, twins, variant_ids, seg_label_map)
     weighted_rates = compute_weighted_conversion_rate(segment_analyses)
 
     tag_analyses = None
@@ -1664,6 +1670,7 @@ def _compute_segment_analyses(
     sessions: List[SessionResult],
     twins: List[DigitalTwin],
     variant_ids: List[str],
+    seg_label_map: Optional[Dict[str, str]] = None,
 ) -> List[SegmentAnalysis]:
     """Compute per-segment variant results for weighted conversion."""
     twin_map = {t.twin_id: t for t in twins}
@@ -1684,10 +1691,12 @@ def _compute_segment_analyses(
         vr = _aggregate_variant_results(seg_s, variant_ids)
         best = max(vr.values(), key=lambda v: v.conversion_rate).variant_id if vr else ""
 
+        label = (seg_label_map or {}).get(seg_id, seg_id)
+
         analyses.append(
             SegmentAnalysis(
                 segment_id=seg_id,
-                segment_label=seg_id,
+                segment_label=label,
                 segment_proportion=proportion,
                 variant_results=vr,
                 best_variant=best,
@@ -2478,7 +2487,7 @@ def step2_simulate(
     # 6. Run simulation
     try:
         reaction = ReactionModel()
-        sim_result = run_simulation(scenario, twins, models, reaction)
+        sim_result = run_simulation(scenario, twins, models, reaction, segments=scenario_segments)
     except Exception as exc:
         raise PipelineError("simulation", str(exc)) from exc
 
