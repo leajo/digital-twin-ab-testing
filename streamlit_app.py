@@ -1863,7 +1863,7 @@ def generate_report_summary(
         winning_variant = best_vid
     else:
         one_line_conclusion = (
-            f"Variant 간 전환율 차이가 통계적으로 유의하지 않습니다 (차이: {diff_pp:.1f}%p)."
+            f"Variant 간 전환율 차이가 통계적으로 유의미하지 않습니다 (차이: {diff_pp:.1f}%p)."
         )
         recommendation = (
             "통계적으로 유의한 차이가 없으므로 추가 시뮬레이션 또는 "
@@ -2612,23 +2612,24 @@ st.markdown("""
         color: #3f51b5;
     }
 
-    /* 섹션 제목 — 본문 대비 1.15배 기준 */
+    /* 섹션 제목 — 대제목 축소 */
     .stMarkdown h1 {
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         font-weight: 700;
         margin-top: 0.4rem;
         margin-bottom: 0.3rem;
     }
     .stMarkdown h2, [data-testid="stHeadingWithActionElements"] {
-        font-size: 1.0rem;
+        font-size: 0.92rem;
         font-weight: 700;
         margin-top: 0.3rem;
         margin-bottom: 0.25rem;
         letter-spacing: -0.3px;
     }
-    /* st.subheader 강제 축소 */
-    [data-testid="stSubheader"], .stSubheader {
-        font-size: 1.0rem !important;
+    /* st.subheader / st.header 강제 축소 */
+    [data-testid="stSubheader"], .stSubheader,
+    [data-testid="stHeader"] {
+        font-size: 0.92rem !important;
     }
     .stMarkdown h3 {
         font-size: 0.95rem;
@@ -2723,18 +2724,30 @@ st.markdown("""
         display: none !important;
     }
 
-    /* 데이터프레임 컬럼 소팅 비활성화 */
-    [data-testid="stDataFrame"] th button {
+    /* 데이터프레임 컬럼 소팅 완전 비활성화 */
+    [data-testid="stDataFrame"] th button,
+    [data-testid="stDataFrame"] [role="columnheader"] button,
+    .dvn-scroller th button,
+    [data-testid="glideDataEditor"] th button {
         display: none !important;
+        pointer-events: none !important;
+    }
+    [data-testid="stDataFrame"] th {
+        cursor: default !important;
     }
 
-    /* 버튼 너비 제한 — 전체 너비 대신 콘텐츠 맞춤 */
+    /* 버튼 — 너비 제한 + 중앙 정렬 */
     .stButton > button {
         max-width: 320px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        vertical-align: middle;
     }
     .stButton {
         display: flex;
         justify-content: flex-start;
+        align-items: center;
     }
 
     /* 전체 컨테이너 */
@@ -2744,14 +2757,31 @@ st.markdown("""
         padding-right: 1.5rem !important;
     }
 
-    /* 메트릭 카드 */
+    /* 메트릭 카드 — 중앙 정렬 */
     [data-testid="stMetric"] {
         background: #f8f9fc;
         border-radius: 8px;
         padding: 10px 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
-    /* expander 스타일 */
+    /* 배지 중앙 정렬 */
+    .badge-significant, .badge-not-significant {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        vertical-align: middle;
+    }
+
+    /* 라디오/체크박스 중앙 정렬 */
+    .stRadio > div, .stCheckbox > div {
+        display: flex;
+        align-items: center;
+    }
+
+    /* expander 헤더 중앙 정렬 */
     .streamlit-expanderHeader {
         font-size: 0.9rem;
     }
@@ -2867,7 +2897,7 @@ with tab_intro:
 
     # Supported Industries
     st.subheader("지원 업종")
-    col_i1, col_i2, col_i3 = st.columns(3)
+    col_i1, col_i2, col_i3, col_i4 = st.columns(4)
     with col_i1:
         st.markdown("#### 🛍️ 이커머스")
         st.markdown("프로모션, 가격 표시, CTA 변경 등 구매 전환 최적화")
@@ -2877,6 +2907,9 @@ with tab_intro:
     with col_i3:
         st.markdown("#### 🎬 OTT/콘텐츠")
         st.markdown("구독 전환, 콘텐츠 시청, 워치리스트 추가 등 콘텐츠 서비스 최적화")
+    with col_i4:
+        st.markdown("#### 🔧 기타")
+        st.markdown("교육, 여행, 헬스케어 등 다양한 업종으로 확장 중. 커스텀 이벤트 로그를 업로드하면 어떤 서비스든 시뮬레이션 가능")
 
     st.divider()
 
@@ -3207,7 +3240,7 @@ with tab_demo:
             if summary.is_significant:
                 st.markdown('<span class="badge-significant">✅ 통계적 유의</span>', unsafe_allow_html=True)
             else:
-                st.markdown('<span class="badge-not-significant">⚠️ 유의하지 않음</span>', unsafe_allow_html=True)
+                st.markdown('<span class="badge-not-significant">⚠️ 유의미하지 않음</span>', unsafe_allow_html=True)
 
         st.divider()
 
@@ -3284,7 +3317,7 @@ with tab_demo:
                 col_st1.metric("χ² 통계량", f"{chi_sq.chi2_statistic:.4f}")
                 col_st2.metric("p-value", f"{chi_sq.p_value:.4f}")
                 col_st3.metric("Cohen's h", f"{chi_sq.cohens_h:.4f}")
-                col_st4.metric("유의성", "✅ 유의" if chi_sq.is_significant else "❌ 유의하지 않음")
+                col_st4.metric("유의성", "✅ 유의미" if chi_sq.is_significant else "❌ 유의미하지 않음")
                 if chi_sq.confidence_intervals:
                     fig_ci = go.Figure()
                     for vid, (lower, upper) in chi_sq.confidence_intervals.items():
