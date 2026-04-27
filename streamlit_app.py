@@ -1575,7 +1575,10 @@ def analyze_by_tags(
 ) -> Dict[str, List[TagGroupAnalysis]]:
     """Group twins by each analysis tag and compute per-group variant results."""
     twin_map: Dict[str, DigitalTwin] = {t.twin_id: t for t in twins}
-    session_map: Dict[str, SessionResult] = {s.twin_id: s for s in session_results}
+    # 동일 트윈이 여러 variant 세션을 가질 수 있으므로 리스트로 매핑
+    session_by_twin: Dict[str, List[SessionResult]] = defaultdict(list)
+    for s in session_results:
+        session_by_twin[s.twin_id].append(s)
 
     dim_lookup: Dict[str, AnalysisDimension] = {}
     if analysis_dimensions:
@@ -1604,7 +1607,9 @@ def analyze_by_tags(
         tag_group_analyses: List[TagGroupAnalysis] = []
 
         for group_val, twin_ids in sorted(groups.items()):
-            group_sessions = [session_map[tid] for tid in twin_ids if tid in session_map]
+            group_sessions = []
+            for tid in twin_ids:
+                group_sessions.extend(session_by_twin.get(tid, []))
             if not group_sessions:
                 continue
 
