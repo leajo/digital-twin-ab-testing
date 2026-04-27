@@ -2612,31 +2612,31 @@ st.markdown("""
         color: #3f51b5;
     }
 
-    /* 섹션 제목 — 자연스러운 크기 계층 */
+    /* 섹션 제목 — 본문 대비 1.3배 기준 */
     .stMarkdown h1 {
-        font-size: 1.6rem;
-        font-weight: 800;
-        margin-top: 0.8rem;
-        margin-bottom: 0.6rem;
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-top: 0.5rem;
+        margin-bottom: 0.4rem;
     }
     .stMarkdown h2, [data-testid="stHeadingWithActionElements"] {
-        font-size: 1.2rem;
+        font-size: 1.15rem;
         font-weight: 700;
-        margin-top: 0.6rem;
-        margin-bottom: 0.4rem;
+        margin-top: 0.4rem;
+        margin-bottom: 0.3rem;
         letter-spacing: -0.3px;
     }
     .stMarkdown h3 {
-        font-size: 1.05rem;
+        font-size: 1.0rem;
         font-weight: 600;
-        margin-top: 0.5rem;
-        margin-bottom: 0.3rem;
+        margin-top: 0.3rem;
+        margin-bottom: 0.2rem;
     }
     .stMarkdown h4 {
-        font-size: 0.95rem;
+        font-size: 0.92rem;
         font-weight: 600;
-        margin-top: 0.4rem;
-        margin-bottom: 0.2rem;
+        margin-top: 0.2rem;
+        margin-bottom: 0.15rem;
         color: #444;
     }
 
@@ -2663,10 +2663,7 @@ st.markdown("""
         margin-top: 0.5rem;
     }
 
-    /* 탭 내부 간격 */
-    .stTabs [data-baseweb="tab-panel"] {
-        padding-top: 0.8rem;
-    }
+    /* 탭 내부 간격 — 위에서 통합 처리 */
 
     .metric-highlight {
         font-size: 1.8rem;
@@ -2694,14 +2691,25 @@ st.markdown("""
         margin-bottom: 0.4rem;
     }
 
-    /* 탭 스타일 */
+    /* 탭 — 브랜드 헤더와 같은 레벨, 구분 강화 */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
+        gap: 0;
+        border-bottom: 2px solid #e0e0e0;
     }
     .stTabs [data-baseweb="tab"] {
         font-family: 'Pretendard', sans-serif;
         font-weight: 600;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
+        padding: 8px 20px;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+    }
+    .stTabs [aria-selected="true"] {
+        border-bottom: 3px solid #3f51b5 !important;
+        color: #3f51b5 !important;
+    }
+    .stTabs [data-baseweb="tab-panel"] {
+        padding-top: 1rem;
     }
 
     /* 헤더 앵커 링크 숨기기 */
@@ -2725,18 +2733,18 @@ st.markdown("""
         justify-content: flex-start;
     }
 
-    /* 전체 컨테이너 최대 너비 */
+    /* 전체 컨테이너 */
     .block-container {
-        max-width: 960px !important;
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
+        max-width: 860px !important;
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
     }
 
-    /* 메트릭 카드 간격 */
+    /* 메트릭 카드 */
     [data-testid="stMetric"] {
         background: #f8f9fc;
-        border-radius: 10px;
-        padding: 12px 16px;
+        border-radius: 8px;
+        padding: 10px 14px;
     }
 
     /* expander 스타일 */
@@ -3031,26 +3039,33 @@ with tab_demo:
     else:
         current_step = 1
 
-    # 스텝 인디케이터
-    step_labels = ["① 고객 데이터 셋팅", "② 시나리오 설정", "③ 결과 리포트"]
-    cols_step = st.columns(3)
-    for i, lbl in enumerate(step_labels):
+    # 스텝 인디케이터 (화살표 + 넘버링 + 구분)
+    step_items = [
+        ("1", "고객 데이터 셋팅"),
+        ("2", "시나리오 설정"),
+        ("3", "결과 리포트"),
+    ]
+    indicator_parts = []
+    for i, (num, label) in enumerate(step_items):
         step_num = i + 1
-        with cols_step[i]:
-            if step_num < current_step:
-                st.markdown(f'<p style="text-align:center; color:#4caf50; font-weight:700; font-size:0.9rem;">✅ {lbl}</p>', unsafe_allow_html=True)
-            elif step_num == current_step:
-                st.markdown(f'<p style="text-align:center; color:#3f51b5; font-weight:700; font-size:0.9rem;">● {lbl}</p>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<p style="text-align:center; color:#ccc; font-size:0.9rem;">○ {lbl}</p>', unsafe_allow_html=True)
+        if step_num < current_step:
+            indicator_parts.append(f'<span style="background:#4caf50; color:#fff; border-radius:50%; width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700;">✓</span> <span style="color:#4caf50; font-weight:600; font-size:0.85rem;">{label}</span>')
+        elif step_num == current_step:
+            indicator_parts.append(f'<span style="background:#3f51b5; color:#fff; border-radius:50%; width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700;">{num}</span> <span style="color:#3f51b5; font-weight:700; font-size:0.85rem;">{label}</span>')
+        else:
+            indicator_parts.append(f'<span style="background:#e0e0e0; color:#999; border-radius:50%; width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:600;">{num}</span> <span style="color:#bbb; font-size:0.85rem;">{label}</span>')
 
-    st.divider()
+    arrow = '<span style="color:#ccc; margin:0 12px; font-size:0.9rem;">→</span>'
+    st.markdown(
+        f'<div style="display:flex; align-items:center; justify-content:center; gap:4px; padding:10px 0; margin-bottom:16px;">{arrow.join(indicator_parts)}</div>',
+        unsafe_allow_html=True,
+    )
 
     # ══════════════════════════════════════
     # STEP 1
     # ══════════════════════════════════════
     if current_step == 1:
-        st.subheader("고객 데이터 셋팅")
+        st.subheader("1. 고객 데이터 셋팅")
         data_method = st.radio("데이터 소스를 선택하세요", options=["🎲 샘플 데이터 사용", "📁 직접 파일 업로드"], horizontal=True, label_visibility="collapsed")
 
         if data_method == "🎲 샘플 데이터 사용":
@@ -3100,7 +3115,7 @@ with tab_demo:
             col_m3.metric("프로파일", f"{ur.profile_count:,}")
             col_m4.metric("세그먼트", f"{ur.base_segment_count}")
 
-        st.subheader("시나리오 설정")
+        st.subheader("2. 시나리오 설정")
 
         use_sample_scenario = False
         if st.session_state.get("data_source") == "sample":
@@ -3178,7 +3193,7 @@ with tab_demo:
             st.rerun()
 
         # 실험 요약
-        st.subheader("실험 요약")
+        st.subheader("3. 실험 결과")
         summary = report.summary
         col_sum1, col_sum2 = st.columns([3, 1])
         with col_sum1:
