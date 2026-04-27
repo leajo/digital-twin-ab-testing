@@ -3307,6 +3307,29 @@ with tab_demo:
         unsafe_allow_html=True,
     )
 
+    # 스텝별 액션 버튼 (인디케이터 바로 아래, 중앙 정렬)
+    if current_step == 2:
+        col_ab1, col_ab2, col_ab3 = st.columns([2, 1, 2])
+        with col_ab2:
+            if st.button("↩️ 데이터 다시 선택", key="back_to_data"):
+                for key in ["upload_result", "sim_result", "csv_bytes", "csv_str", "data_source"]:
+                    st.session_state.pop(key, None)
+                st.rerun()
+    elif current_step == 3:
+        report_csv = generate_report_csv(st.session_state["sim_result"].report)
+        col_rb1, col_rb2, col_rb3, col_rb4 = st.columns([2, 1, 1, 2])
+        with col_rb2:
+            if st.button("↩️ 다시 테스트", key="back_to_scenario"):
+                st.session_state.pop("sim_result", None)
+                st.rerun()
+        with col_rb3:
+            st.download_button(
+                label="📥 CSV 다운로드",
+                data=report_csv,
+                file_name="twinpilot_report.csv",
+                mime="text/csv",
+            )
+
     # ══════════════════════════════════════
     # STEP 1
     # ══════════════════════════════════════
@@ -3361,15 +3384,7 @@ with tab_demo:
             col_m3.metric("프로파일", f"{ur.profile_count:,}")
             col_m4.metric("세그먼트", f"{ur.base_segment_count}")
 
-        # 타이틀 + 우측 데이터 다시 선택
-        col_t2, col_back2 = st.columns([4, 1])
-        with col_t2:
-            st.subheader("2. 시나리오 설정")
-        with col_back2:
-            if st.button("↩️ 데이터 다시 선택", key="back_to_data"):
-                for key in ["upload_result", "sim_result", "csv_bytes", "csv_str", "data_source"]:
-                    st.session_state.pop(key, None)
-                st.rerun()
+        st.subheader("2. 시나리오 설정")
 
         use_sample_scenario = False
         if st.session_state.get("data_source") == "sample":
@@ -3440,24 +3455,7 @@ with tab_demo:
 
         # 리포트 다운로드 + 새 시나리오 버튼은 아래에서 처리
 
-        # 실험 결과 타이틀 + 우측 액션 버튼
-        col_title, col_actions = st.columns([3, 2])
-        with col_title:
-            st.subheader("3. 실험 결과")
-        with col_actions:
-            report_csv = generate_report_csv(report)
-            col_a1, col_a2 = st.columns(2)
-            with col_a1:
-                if st.button("↩️ 다시 테스트", key="back_to_scenario"):
-                    st.session_state.pop("sim_result", None)
-                    st.rerun()
-            with col_a2:
-                st.download_button(
-                    label="📥 CSV 다운로드",
-                    data=report_csv,
-                    file_name="twinpilot_report.csv",
-                    mime="text/csv",
-                )
+        st.subheader("3. 실험 결과")
 
         # 자동 인사이트
         insights = generate_insights(report)
