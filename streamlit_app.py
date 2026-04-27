@@ -2411,15 +2411,10 @@ st.markdown("""
         font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     }
 
-    /* Streamlit 내부 요소 전체 폰트 강제 적용 */
-    .stApp, .stApp *, .main, .main *,
+    /* Streamlit 내부 요소 전체 폰트 강제 적용 (레이아웃 요소 제외) */
     .stMarkdown, .stMarkdown *,
-    .stTabs, .stTabs *,
-    [data-testid="stAppViewContainer"],
-    [data-testid="stAppViewContainer"] *,
-    .element-container, .element-container *,
-    div, span, p, h1, h2, h3, h4, h5, h6,
-    label, input, select, textarea, button, th, td, li {
+    [data-testid="stMarkdownContainer"],
+    [data-testid="stMarkdownContainer"] * {
         font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     }
 
@@ -2493,19 +2488,19 @@ st.markdown("""
         color: #3f51b5;
     }
 
-    /* 섹션 제목 — 전체 적용 */
-    h2, .stMarkdown h2 {
-        font-size: 1.3rem !important;
-        font-weight: 700 !important;
-        letter-spacing: -0.3px !important;
+    /* 섹션 제목 — Markdown 영역만 적용 */
+    .stMarkdown h2 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        letter-spacing: -0.3px;
     }
-    h3, .stMarkdown h3 {
-        font-size: 1.1rem !important;
-        font-weight: 600 !important;
+    .stMarkdown h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
     }
-    h4, .stMarkdown h4 {
-        font-size: 1rem !important;
-        font-weight: 600 !important;
+    .stMarkdown h4 {
+        font-size: 1rem;
+        font-weight: 600;
     }
 
     /* 본문 — 전체 적용 (버튼/입력 요소 제외) */
@@ -2855,64 +2850,74 @@ with tab_demo:
     st.markdown("샘플 데이터 또는 직접 업로드한 데이터로 Digital Twin A/B 테스트를 체험해보세요.")
     st.divider()
 
-    # ── Step 1: 데이터 ──
-    st.subheader("Step 1: 데이터")
+    # ── Step 1: 고객 데이터 셋팅 ──
+    st.subheader("Step 1: 고객 데이터 셋팅")
 
-    col_sample, col_upload = st.columns(2)
-
-    with col_sample:
-        st.markdown("**🎲 샘플 데이터 사용**")
-        st.caption("무신사 패션 이커머스 가상 데이터 (100명 유저, 30일)")
-        if st.button("📦 샘플 데이터 생성", use_container_width=True, type="primary"):
-            with st.spinner("샘플 데이터 생성 중..."):
-                events = generate_sample_data(user_count=100, days=30)
-                csv_str = serialize_to_csv(events)
-                csv_bytes = csv_str.encode("utf-8")
-
-                upload_result = step1_upload(csv_bytes, "sample_data.csv")
-
-                st.session_state["upload_result"] = upload_result
-                st.session_state["csv_bytes"] = csv_bytes
-                st.session_state["csv_str"] = csv_str
-                st.session_state["data_source"] = "sample"
-                # Clear previous simulation results
-                st.session_state.pop("sim_result", None)
-            st.success("샘플 데이터가 생성되었습니다!")
-
-    with col_upload:
-        st.markdown("**📁 파일 업로드**")
-        st.caption("CSV 또는 JSON 형식의 이벤트 로그 파일")
-        uploaded_file = st.file_uploader(
-            "파일 선택",
-            type=["csv", "json"],
+    # 데이터 소스 선택 (2depth 구조)
+    if "upload_result" not in st.session_state:
+        data_method = st.radio(
+            "데이터 소스를 선택하세요",
+            options=["🎲 샘플 데이터 사용", "📁 직접 파일 업로드"],
+            horizontal=True,
             label_visibility="collapsed",
         )
-        if uploaded_file is not None:
-            file_bytes = uploaded_file.read()
-            filename = uploaded_file.name
-            try:
-                with st.spinner("파일 처리 중..."):
-                    upload_result = step1_upload(file_bytes, filename)
-                    st.session_state["upload_result"] = upload_result
-                    st.session_state["csv_bytes"] = file_bytes
-                    st.session_state["csv_str"] = file_bytes.decode("utf-8")
-                    st.session_state["data_source"] = "upload"
-                    st.session_state.pop("sim_result", None)
-                st.success(f"'{filename}' 파일이 처리되었습니다!")
-            except (PipelineError, ValueError) as e:
-                st.error(f"파일 처리 실패: {e}")
 
-    # 데이터 요약 표시
+        if data_method == "🎲 샘플 데이터 사용":
+            st.caption("패션 이커머스 가상 데이터 (100명 유저, 30일)")
+            if st.button("샘플 데이터 생성 및 분석 시작", use_container_width=True, type="primary"):
+                with st.spinner("샘플 데이터 생성 및 분석 중..."):
+                    events = generate_sample_data(user_count=100, days=30)
+                    csv_str = serialize_to_csv(events)
+                    csv_bytes = csv_str.encode("utf-8")
+                    upload_result = step1_upload(csv_bytes, "sample_data.csv")
+                    st.session_state["upload_result"] = upload_result
+                    st.session_state["csv_bytes"] = csv_bytes
+                    st.session_state["csv_str"] = csv_str
+                    st.session_state["data_source"] = "sample"
+                    st.session_state.pop("sim_result", None)
+                st.rerun()
+
+        else:
+            st.caption("CSV 또는 JSON 형식의 이벤트 로그 파일을 업로드하세요")
+            uploaded_file = st.file_uploader(
+                "파일 선택",
+                type=["csv", "json"],
+                label_visibility="collapsed",
+            )
+            if uploaded_file is not None:
+                file_bytes = uploaded_file.read()
+                filename = uploaded_file.name
+                try:
+                    with st.spinner("파일 분석 중..."):
+                        upload_result = step1_upload(file_bytes, filename)
+                        st.session_state["upload_result"] = upload_result
+                        st.session_state["csv_bytes"] = file_bytes
+                        st.session_state["csv_str"] = file_bytes.decode("utf-8")
+                        st.session_state["data_source"] = "upload"
+                        st.session_state.pop("sim_result", None)
+                    st.rerun()
+                except (PipelineError, ValueError) as e:
+                    st.error(f"파일 처리 실패: {e}")
+
+    # 데이터 요약 표시 (선택 완료 후)
     if "upload_result" in st.session_state:
         ur = st.session_state["upload_result"]
-        st.divider()
-        st.markdown("#### 📊 데이터 요약")
+        st.markdown("#### 📊 데이터 분석 완료")
 
         col_m1, col_m2, col_m3, col_m4 = st.columns(4)
         col_m1.metric("총 이벤트 수", f"{ur.upload_summary.total_events:,}")
         col_m2.metric("고유 유저 수", f"{ur.upload_summary.unique_users:,}")
         col_m3.metric("프로파일 수", f"{ur.profile_count:,}")
         col_m4.metric("세그먼트 수", f"{ur.base_segment_count}")
+
+        # 다시 선택 버튼
+        if st.button("↩️ 데이터 다시 선택", type="secondary"):
+            st.session_state.pop("upload_result", None)
+            st.session_state.pop("sim_result", None)
+            st.session_state.pop("csv_bytes", None)
+            st.session_state.pop("csv_str", None)
+            st.session_state.pop("data_source", None)
+            st.rerun()
 
         # 데이터 미리보기
         with st.expander("📋 데이터 미리보기", expanded=False):
