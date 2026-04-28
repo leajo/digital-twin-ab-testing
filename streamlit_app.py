@@ -3096,60 +3096,48 @@ st.markdown("""
 # 버튼/드롭다운 텍스트 상하 중앙 정렬 (추가 주입)
 st.markdown("""
 <style>
-    /* 모든 버튼 — 텍스트 완전 중앙 */
-    button, .stButton > button,
-    button[kind="primary"], button[kind="secondary"],
-    [data-testid="stBaseButton-primary"],
-    [data-testid="stBaseButton-secondary"],
-    [data-testid="stDownloadButton"] > button {
+    /* 버튼 내부 텍스트 — baseline 보정 */
+    button p, .stButton button p,
+    [data-testid="stBaseButton-primary"] p,
+    [data-testid="stBaseButton-secondary"] p,
+    [data-testid="stDownloadButton"] button p {
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1 !important;
+        display: inline !important;
+        vertical-align: middle !important;
+        transform: translateY(1px) !important;
+    }
+
+    /* 버튼 자체 — flexbox 중앙 */
+    button, .stButton > button {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         padding: 0.4rem 1rem !important;
         line-height: 1 !important;
-        box-sizing: border-box !important;
     }
 
-    /* 드롭다운 — 선택된 값 중앙 */
+    /* 드롭다운 내부 텍스트 baseline 보정 */
+    [data-baseweb="select"] span,
+    [data-baseweb="select"] div[class*="value"] {
+        line-height: 1 !important;
+        vertical-align: middle !important;
+        transform: translateY(1px) !important;
+    }
     [data-baseweb="select"] > div:first-child {
         display: flex !important;
         align-items: center !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
         min-height: 38px !important;
     }
-    [data-baseweb="select"] [data-testid="stMarkdownContainer"],
-    [data-baseweb="select"] span[class] {
-        display: flex !important;
-        align-items: center !important;
+
+    /* 라디오/체크박스 텍스트 보정 */
+    [role="radiogroup"] label p,
+    .stCheckbox label p {
+        margin: 0 !important;
         line-height: 1 !important;
-    }
-
-    /* 인풋 필드 — 텍스트 중앙 */
-    input[type="text"], input[type="number"],
-    [data-baseweb="input"] input {
-        padding-top: 0.4rem !important;
-        padding-bottom: 0.4rem !important;
-        line-height: 1.4 !important;
-    }
-
-    /* 라디오 버튼 — 텍스트 중앙 */
-    [role="radiogroup"] label {
-        display: flex !important;
-        align-items: center !important;
-    }
-
-    /* 체크박스 — 텍스트 중앙 */
-    .stCheckbox label > div {
-        display: flex !important;
-        align-items: center !important;
-    }
-
-    /* 파일 업로더 버튼 */
-    [data-testid="stFileUploader"] button {
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        vertical-align: middle !important;
+        transform: translateY(1px) !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -3530,6 +3518,27 @@ with tab_demo:
             col_m3.metric("프로파일", f"{ur.profile_count:,}")
             col_m4.metric("세그먼트", f"{ur.base_segment_count}")
 
+        with st.expander("🏷️ 기본 세그먼트 상세", expanded=False):
+            st.markdown("""
+            **기본 세그먼트란?** 데이터 업로드 시 전체 행동 변수(전환율, 이탈률, 세션 시간, 디바이스 등)를 기반으로 K-Means 클러스터링을 수행하여 자동 생성된 유저 그룹입니다.
+            Silhouette Score를 기준으로 최적 그룹 수(2~10개)가 자동 결정됩니다.
+            """)
+            seg_data = []
+            for seg in ur.base_segments:
+                if seg.summary:
+                    seg_data.append({
+                        "세그먼트": seg.label,
+                        "멤버 수": seg.summary.member_count,
+                        "평균 전환율": f"{seg.summary.avg_conversion_rate * 100:.1f}%",
+                        "평균 세션(초)": f"{seg.summary.avg_session_duration:.0f}",
+                        "평균 페이지뷰": f"{seg.summary.avg_pages_per_session:.1f}",
+                        "이탈률": f"{seg.summary.avg_bounce_rate * 100:.1f}%",
+                        "주요 디바이스": seg.summary.primary_device,
+                    })
+            if seg_data:
+                st.table(pd.DataFrame(seg_data))
+            st.caption("⚡ 시나리오를 설정하면, 해당 시나리오 유형에 맞는 주요 변수만으로 세그먼트가 동적으로 재구성됩니다.")
+
         st.markdown('<div style="font-size:17px; font-weight:700; margin:0.5rem 0 0.4rem 0; color:#222;">2. 시나리오 설정</div>', unsafe_allow_html=True)
 
         use_sample_scenario = False
@@ -3602,6 +3611,27 @@ with tab_demo:
         # 리포트 다운로드 + 새 시나리오 버튼은 아래에서 처리
 
         st.markdown('<div style="font-size:17px; font-weight:700; margin:0.5rem 0 0.4rem 0; color:#222;">3. 실험 결과</div>', unsafe_allow_html=True)
+
+        # 시나리오 세그먼트 안내
+        with st.expander("🔀 시나리오 맞춤 세그먼트 정보", expanded=False):
+            st.markdown(f"""
+            **시나리오 맞춤 세그먼트란?** 시나리오 유형에 따라 자동 도출된 주요 행동 변수만을 기반으로 K-Means 클러스터링을 재실행하여 생성된 세그먼트입니다.
+            기본 세그먼트(전체 변수 기반)와 달리, 해당 실험에 영향을 미치는 변수만으로 유저를 재분류하므로 실험 목적에 최적화된 분석이 가능합니다.
+
+            - **도출된 주요 변수:** {', '.join(sim.key_variables)}
+            - **생성된 시나리오 세그먼트 수:** {sim.scenario_segment_count}개
+            - **시뮬레이션 트윈 수:** {sim.twin_count:,}명 (동일 트윈이 시나리오 A, B 모두 경험)
+            """)
+            # 세그먼트별 요약
+            if report.segment_heatmap:
+                seg_info = []
+                for sa in report.segment_heatmap:
+                    seg_info.append({
+                        "세그먼트": sa.segment_label,
+                        "비율": f"{sa.segment_proportion * 100:.1f}%",
+                        "최적 시나리오": "A" if sa.best_variant == "variant_a" else "B",
+                    })
+                st.table(pd.DataFrame(seg_info))
 
         # 자동 인사이트
         insights = generate_insights(report)
