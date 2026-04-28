@@ -1447,7 +1447,7 @@ def _distribute_proportionally(
 # Reaction Model
 # ──────────────────────────────────────────────
 
-DEFAULT_BASE_CONVERSION_RATE = 0.05
+DEFAULT_BASE_CONVERSION_RATE = 0.10
 
 
 class ReactionModel:
@@ -1460,12 +1460,14 @@ class ReactionModel:
         scenario: Scenario,
         current_page: str,
         base_conversion_rate: Optional[float] = None,
+        segment_label: Optional[str] = None,
+        segment_summary: Optional[SegmentSummary] = None,
     ) -> bool:
         """Determine if twin converts for variant_id on current_page."""
         if base_conversion_rate is None:
             base_conversion_rate = DEFAULT_BASE_CONVERSION_RATE
 
-        rules = self.get_segment_rules(twin.segment_id, scenario)
+        rules = self.get_segment_rules(twin.segment_id, scenario, segment_label=segment_label)
         variant_rules = [r for r in rules if r.variant_id == variant_id]
 
         if variant_rules:
@@ -1473,12 +1475,81 @@ class ReactionModel:
             effective_rate = min(base_conversion_rate * modifier, 1.0)
             return random.random() < effective_rate
 
-        return self.apply_default_reaction(base_conversion_rate)
+        # 규칙 매칭 실패 시: 세그먼트 특성 기반 동적 modifier 적용
+        modifier = self._compute_dynamic_modifier(variant_id, scenario, segment_summary)
+        effective_rate = min(base_conversion_rate * modifier, 1.0)
+        return random.random() < effective_rate
 
     @staticmethod
-    def get_segment_rules(segment_id: str, scenario: Scenario) -> List[ReactionRule]:
-        """Return reaction rules for segment_id from scenario."""
-        return [r for r in scenario.reaction_rules if r.segment_id == segment_id]
+    def _compute_dynamic_modifier(
+        variant_id: str, scenario: Scenario,
+        segment_summary: Optional[SegmentSummary] = None,
+    ) -> float:
+        """세그먼트 특성 기반으로 동적 modifier를 계산한다.
+        세그먼트의 전환율, 이탈률 등에 따라 variant별 차별 반응을 생성한다."""
+        if segment_summary is None:
+            return 1.0
+
+        scenario_type = scenario.scenario_type
+        variants = scenario.variants
+        v_idx = next((i for i, v in enumerate(variants) if v.variant_id == variant_id), 0)
+
+        cr = segment_summary.avg_conversion_rate
+        br = segment_summary.avg_bounce_rate
+
+        if scenario_type == "promotion":
+            # 고전환 세그먼트: variant_a(할인)에 강하게 반응
+            # 저전환 세그먼트: variant_b(적립금/무료배송)에 더 반응
+            if cr >= 0.15:  # 고전환
+                return 3.5 if v_idx == 0 else 1.8
+            elif cr >= 0.05:  # 중전환
+                return 2.0 if v_idx == 0 else 2.5
+            else:  # 저전환
+                return 1.2 if v_idx == 0 else 2.0
+
+        elif scenario_type == "cta_change":
+            if br >= 0.5:  # 고이탈
+                return 1.0 if v_idx == 0 else 3.0
+            else:
+                return 1.5 if v_idx == 0 else 2.0
+
+        elif scenario_type == "funnel_change":
+            if br >= 0.5:
+                return 1.0 if v_idx == 0 else 3.5
+            else:
+                return 1.5 if v_idx == 0 else 2.5
+
+        elif scenario_type == "price_display":
+            if cr >= 0.1:
+                return 2.0 if v_idx == 0 else 3.0
+            else:
+                return 1.0 if v_idx == 0 else 2.0
+
+        elif scenario_type == "ui_position":
+            return 1.0 if v_idx == 0 else 2.0
+
+        elif scenario_type == "timing":
+            return 1.0 if v_idx == 0 else 1.8
+
+        return 1.0
+
+    @staticmethod
+    def get_segment_rules(segment_id: str, scenario: Scenario,
+                          segment_label: Optional[str] = None) -> List[ReactionRule]:
+        """Return reaction rules for segment_id from scenario.
+        Supports fnmatch-style wildcard patterns (e.g., *price_sensitive*)
+        matching against segment_id and segment label."""
+        import fnmatch
+        matched: List[ReactionRule] = []
+        for r in scenario.reaction_rules:
+            if r.segment_id == segment_id:
+                matched.append(r)
+            elif "*" in r.segment_id or "?" in r.segment_id:
+                if fnmatch.fnmatch(segment_id, r.segment_id):
+                    matched.append(r)
+                elif segment_label and fnmatch.fnmatch(segment_label, r.segment_id):
+                    matched.append(r)
+        return matched
 
     @staticmethod
     def apply_default_reaction(base_conversion_rate: float) -> bool:
@@ -1511,6 +1582,8 @@ def simulate_session(
     scenario: Scenario,
     variant_id: str,
     reaction_model: ReactionModel,
+    segment_label: Optional[str] = None,
+    segment_summary: Optional[SegmentSummary] = None,
 ) -> SessionResult:
     """Simulate a single session for twin using its Markov model."""
     page_sequence: List[str] = []
@@ -1538,7 +1611,9 @@ def simulate_session(
             reached_target = True
             if not converted:
                 converted = reaction_model.evaluate(
-                    twin, variant_id, scenario, next_state
+                    twin, variant_id, scenario, next_state,
+                    segment_label=segment_label,
+                    segment_summary=segment_summary,
                 )
 
         current_state = next_state
@@ -1574,20 +1649,24 @@ def run_simulation(
     total = len(twins) * variant_count
     processed = 0
 
+    # 세그먼트 라벨 및 summary 매핑 (simulate_session에서 사용)
+    seg_label_map: Dict[str, str] = {}
+    seg_summary_map: Dict[str, SegmentSummary] = {}
+    if segments:
+        seg_label_map = {s.segment_id: s.label for s in segments}
+        seg_summary_map = {s.segment_id: s.summary for s in segments if s.summary}
+
     for vid, group_twins in variant_twin_map.items():
         for twin in group_twins:
             model = models.get(twin.segment_id) or models.get("default")
             if model is None:
                 processed += 1
                 continue
-            result = simulate_session(twin, model, scenario, vid, reaction_model)
+            result = simulate_session(twin, model, scenario, vid, reaction_model,
+                                      segment_label=seg_label_map.get(twin.segment_id),
+                                      segment_summary=seg_summary_map.get(twin.segment_id))
             session_results.append(result)
             processed += 1
-
-    # 세그먼트 라벨 매핑
-    seg_label_map: Dict[str, str] = {}
-    if segments:
-        seg_label_map = {s.segment_id: s.label for s in segments}
 
     variant_results = _aggregate_variant_results(session_results, variant_ids)
     segment_analyses = _compute_segment_analyses(session_results, twins, variant_ids, seg_label_map)
@@ -2285,7 +2364,7 @@ def generate_musinsa_scenario_config() -> dict:
             {"segment_id": "*impulse*", "variant_id": "variant_b", "conversion_rate_modifier": 1.2, "condition": None},
         ],
         "primary_metric": "purchase_conversion_rate",
-        "twin_count": 1000,
+        "twin_count": 2000,
         "analysis_tags": ["price_sensitivity", "device", "visit_frequency"],
         "analysis_dimensions": [
             {
@@ -2319,7 +2398,7 @@ def generate_finance_scenario_config() -> dict:
         ],
         "reaction_rules": [],
         "primary_metric": "apply_conversion_rate",
-        "twin_count": 1000,
+        "twin_count": 2000,
         "analysis_tags": ["device", "visit_frequency"],
         "analysis_dimensions": [
             {"tag_name": "device", "source_attribute": "demographics.primary_device", "classification_rules": None},
@@ -2340,7 +2419,7 @@ def generate_ott_scenario_config() -> dict:
         ],
         "reaction_rules": [],
         "primary_metric": "subscribe_conversion_rate",
-        "twin_count": 1000,
+        "twin_count": 2000,
         "analysis_tags": ["device", "visit_frequency"],
         "analysis_dimensions": [
             {"tag_name": "device", "source_attribute": "demographics.primary_device", "classification_rules": None},
