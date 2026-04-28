@@ -3232,34 +3232,40 @@ components.html("""
         var tablistEl = doc.querySelector('[data-testid="stTabs"] [role="tablist"]');
         if (!brandEl || !tablistEl) return;
 
-        /* fixed 컨테이너 생성 */
+        /* fixed 컨테이너 생성 — 메인 콘텐츠 영역과 동일한 위치/너비 */
         var container = doc.createElement('div');
         container.id = 'tw-fixed-header';
+
+        /* Streamlit 메인 블록의 위치를 기준으로 정렬 */
+        var mainBlock = doc.querySelector('[data-testid="stMainBlockContainer"]');
+        var rect = mainBlock ? mainBlock.getBoundingClientRect() : null;
+
         container.style.cssText = [
             'position: fixed',
             'top: 0',
-            'left: 0',
-            'right: 0',
+            'left: ' + (rect ? rect.left + 'px' : '0'),
+            'width: ' + (rect ? rect.width + 'px' : '100%'),
             'z-index: 9999',
             'background: #fff',
             'box-shadow: 0 1px 4px rgba(0,0,0,0.08)',
             'padding: 0',
+            'box-sizing: border-box',
         ].join(';');
 
-        /* 브랜드 헤더 복제 */
+        /* 브랜드 헤더 복제 — 원본 스타일 유지 */
         var brandClone = brandEl.cloneNode(true);
         brandClone.style.cssText = [
-            'padding: 10px 2rem 6px 2rem',
+            'padding: 10px 1rem 6px 1rem',
             'margin: 0',
         ].join(';');
         container.appendChild(brandClone);
 
-        /* 탭 리스트 — 복제하지 않고 원본 탭 클릭을 프록시 */
+        /* 탭 리스트 — 원본 탭 클릭을 프록시 */
         var tabBar = doc.createElement('div');
         tabBar.style.cssText = [
             'display: flex',
             'gap: 0',
-            'padding: 0 2rem',
+            'padding: 0 1rem',
             'border-bottom: 1px solid #e0e0e0',
             'background: #fff',
         ].join(';');
@@ -3335,6 +3341,14 @@ components.html("""
         });
         origTabs.forEach(function(t) {
             observer.observe(t, { attributes: true, attributeFilter: ['aria-selected'] });
+        });
+
+        /* 리사이즈 시 fixed 헤더 위치/너비 재계산 */
+        window.parent.addEventListener('resize', function() {
+            if (!mainBlock) return;
+            var r = mainBlock.getBoundingClientRect();
+            container.style.left = r.left + 'px';
+            container.style.width = r.width + 'px';
         });
     }
 
