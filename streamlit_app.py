@@ -26,6 +26,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
 from plotly.subplots import make_subplots
 from scipy.stats import chi2_contingency
 from sklearn.cluster import KMeans
@@ -3141,6 +3142,23 @@ st.markdown("""
     [data-testid="stDownloadButton"] button:hover {
         color: #3f51b5 !important;
     }
+
+    /* 상단 고정 헤더 (브랜드 + 탭) */
+    .sticky-header-wrapper {
+        position: sticky;
+        top: 0;
+        z-index: 999;
+        background: #fff;
+        padding-bottom: 0;
+        margin-left: -1.5rem;
+        margin-right: -1.5rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+
+    /* 브랜드 헤더 — JS에서 sticky 처리 */
+
+    /* 탭 바 — JS에서 sticky 처리 */
 </style>
 """, unsafe_allow_html=True)
 
@@ -3213,6 +3231,50 @@ tab_intro, tab_guide, tab_demo = st.tabs([
     "📖 이용 가이드",
     "🚀 데모",
 ])
+
+# 브랜드 헤더 + 탭 바 상단 고정 (parent document에 스타일 주입)
+components.html("""
+<script>
+(function() {
+    var parent = window.parent.document;
+    function makeSticky() {
+        var brandEl = parent.querySelector('.brand-header');
+        if (brandEl) {
+            var brandBlock = brandEl.closest('[data-testid="stVerticalBlock"] > div');
+            if (brandBlock) {
+                brandBlock.style.position = 'sticky';
+                brandBlock.style.top = '0px';
+                brandBlock.style.zIndex = '999';
+                brandBlock.style.background = '#fff';
+                brandBlock.style.paddingTop = '8px';
+                brandBlock.style.marginLeft = '-1.5rem';
+                brandBlock.style.marginRight = '-1.5rem';
+                brandBlock.style.paddingLeft = '1.5rem';
+                brandBlock.style.paddingRight = '1.5rem';
+            }
+        }
+        var tabEl = parent.querySelector('[data-testid="stTabs"]');
+        if (tabEl) {
+            var tabBlock = tabEl.closest('[data-testid="stVerticalBlock"] > div');
+            if (tabBlock) {
+                var topOffset = brandBlock ? brandBlock.offsetHeight : 50;
+                tabBlock.style.position = 'sticky';
+                tabBlock.style.top = topOffset + 'px';
+                tabBlock.style.zIndex = '998';
+                tabBlock.style.background = '#fff';
+                tabBlock.style.marginLeft = '-1.5rem';
+                tabBlock.style.marginRight = '-1.5rem';
+                tabBlock.style.paddingLeft = '1.5rem';
+                tabBlock.style.paddingRight = '1.5rem';
+            }
+        }
+    }
+    setTimeout(makeSticky, 300);
+    setTimeout(makeSticky, 1000);
+    setTimeout(makeSticky, 2500);
+})();
+</script>
+""", height=0)
 
 
 # ══════════════════════════════════════════════
