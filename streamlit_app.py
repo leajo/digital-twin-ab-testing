@@ -3143,22 +3143,7 @@ st.markdown("""
         color: #3f51b5 !important;
     }
 
-    /* 상단 고정 헤더 (브랜드 + 탭) */
-    .sticky-header-wrapper {
-        position: sticky;
-        top: 0;
-        z-index: 999;
-        background: #fff;
-        padding-bottom: 0;
-        margin-left: -1.5rem;
-        margin-right: -1.5rem;
-        padding-left: 1.5rem;
-        padding-right: 1.5rem;
-    }
-
-    /* 브랜드 헤더 — JS에서 sticky 처리 */
-
-    /* 탭 바 — JS에서 sticky 처리 */
+    /* 상단 고정 헤더 — JS(position:fixed)에서 처리 */
 </style>
 """, unsafe_allow_html=True)
 
@@ -3232,96 +3217,130 @@ tab_intro, tab_guide, tab_demo = st.tabs([
     "🚀 데모",
 ])
 
-# 브랜드 헤더 + 탭 바 상단 고정 (parent document에 CSS 주입)
+# 브랜드 헤더 + 탭 바 상단 고정 (position:fixed 클론 방식)
 components.html("""
 <script>
 (function() {
     var doc = window.parent.document;
 
-    /* CSS를 parent document <head>에 주입 — JS 개별 스타일보다 안정적 */
-    var style = doc.createElement('style');
-    style.textContent = [
-        /* Streamlit 메인 컨테이너의 overflow 보정 — sticky가 동작하려면 필요 */
-        'section[data-testid="stMain"] {',
-        '  overflow: visible !important;',
-        '}',
-        '[data-testid="stMainBlockContainer"] {',
-        '  overflow: visible !important;',
-        '}',
-        'section[data-testid="stMain"] > div {',
-        '  overflow: visible !important;',
-        '}',
+    function createFixedHeader() {
+        /* 이미 생성된 경우 제거 후 재생성 */
+        var existing = doc.getElementById('tw-fixed-header');
+        if (existing) existing.remove();
 
-        /* 브랜드 헤더 블록을 sticky */
-        '.brand-header {',
-        '  position: sticky !important;',
-        '  top: 0 !important;',
-        '  z-index: 999 !important;',
-        '  background: #fff !important;',
-        '  padding-top: 8px !important;',
-        '  padding-bottom: 4px !important;',
-        '  margin-left: -1.5rem !important;',
-        '  margin-right: -1.5rem !important;',
-        '  padding-left: 1.5rem !important;',
-        '  padding-right: 1.5rem !important;',
-        '}',
-
-        /* 탭 리스트(버튼 행) 자체를 sticky — 탭 콘텐츠가 아닌 탭 버튼만 고정 */
-        '[data-testid="stTabs"] [role="tablist"] {',
-        '  position: sticky !important;',
-        '  top: 46px !important;',          /* 브랜드 헤더 높이만큼 오프셋 */
-        '  z-index: 998 !important;',
-        '  background: #fff !important;',
-        '  padding-top: 4px !important;',
-        '  margin-left: -1.5rem !important;',
-        '  margin-right: -1.5rem !important;',
-        '  padding-left: 1.5rem !important;',
-        '  padding-right: 1.5rem !important;',
-        '}',
-    ].join('\\n');
-    doc.head.appendChild(style);
-
-    /* 브랜드 헤더의 부모 블록에도 sticky 적용 (Streamlit 래퍼 div) */
-    function applyBrandSticky() {
         var brandEl = doc.querySelector('.brand-header');
-        if (!brandEl) return;
-        var wrapper = brandEl.closest('[data-testid="stVerticalBlock"] > div');
-        if (wrapper) {
-            wrapper.style.position = 'sticky';
-            wrapper.style.top = '0px';
-            wrapper.style.zIndex = '999';
-            wrapper.style.background = '#fff';
-        }
+        var tablistEl = doc.querySelector('[data-testid="stTabs"] [role="tablist"]');
+        if (!brandEl || !tablistEl) return;
 
-        /* 모든 조상의 overflow를 visible로 — sticky 동작 보장 */
-        var el = brandEl.parentElement;
-        while (el && el !== doc.body && el !== doc.documentElement) {
-            var cs = window.parent.getComputedStyle(el);
-            if (cs.overflow !== 'visible' || cs.overflowY !== 'visible') {
-                el.style.overflow = 'visible';
-                el.style.overflowY = 'visible';
-            }
-            el = el.parentElement;
-        }
+        /* fixed 컨테이너 생성 */
+        var container = doc.createElement('div');
+        container.id = 'tw-fixed-header';
+        container.style.cssText = [
+            'position: fixed',
+            'top: 0',
+            'left: 0',
+            'right: 0',
+            'z-index: 9999',
+            'background: #fff',
+            'box-shadow: 0 1px 4px rgba(0,0,0,0.08)',
+            'padding: 0',
+        ].join(';');
 
-        /* tablist 조상도 동일 처리 */
-        var tablist = doc.querySelector('[data-testid="stTabs"] [role="tablist"]');
-        if (tablist) {
-            el = tablist.parentElement;
-            while (el && el !== doc.body && el !== doc.documentElement) {
-                var cs2 = window.parent.getComputedStyle(el);
-                if (cs2.overflow !== 'visible' || cs2.overflowY !== 'visible') {
-                    el.style.overflow = 'visible';
-                    el.style.overflowY = 'visible';
+        /* 브랜드 헤더 복제 */
+        var brandClone = brandEl.cloneNode(true);
+        brandClone.style.cssText = [
+            'padding: 10px 2rem 6px 2rem',
+            'margin: 0',
+        ].join(';');
+        container.appendChild(brandClone);
+
+        /* 탭 리스트 — 복제하지 않고 원본 탭 클릭을 프록시 */
+        var tabBar = doc.createElement('div');
+        tabBar.style.cssText = [
+            'display: flex',
+            'gap: 0',
+            'padding: 0 2rem',
+            'border-bottom: 1px solid #e0e0e0',
+            'background: #fff',
+        ].join(';');
+
+        var origTabs = tablistEl.querySelectorAll('[role="tab"]');
+        origTabs.forEach(function(origTab, idx) {
+            var btn = doc.createElement('button');
+            btn.textContent = origTab.textContent;
+            var isActive = origTab.getAttribute('aria-selected') === 'true';
+            btn.style.cssText = [
+                'background: none',
+                'border: none',
+                'padding: 8px 16px',
+                'cursor: pointer',
+                'font-size: 0.9rem',
+                'font-weight: ' + (isActive ? '600' : '400'),
+                'color: ' + (isActive ? '#3f51b5' : '#666'),
+                'border-bottom: 2px solid ' + (isActive ? '#3f51b5' : 'transparent'),
+                'transition: all 0.15s',
+                'white-space: nowrap',
+            ].join(';');
+            btn.addEventListener('click', function() {
+                origTab.click();
+                /* 약간의 딜레이 후 active 상태 갱신 */
+                setTimeout(refreshActiveState, 100);
+            });
+            btn.addEventListener('mouseenter', function() {
+                if (origTab.getAttribute('aria-selected') !== 'true') {
+                    btn.style.color = '#3f51b5';
                 }
-                el = el.parentElement;
-            }
+            });
+            btn.addEventListener('mouseleave', function() {
+                if (origTab.getAttribute('aria-selected') !== 'true') {
+                    btn.style.color = '#666';
+                }
+            });
+            tabBar.appendChild(btn);
+        });
+        container.appendChild(tabBar);
+        doc.body.appendChild(container);
+
+        /* 원본 브랜드 헤더와 탭 리스트 숨기기 */
+        brandEl.style.visibility = 'hidden';
+        brandEl.style.height = '0';
+        brandEl.style.overflow = 'hidden';
+        brandEl.style.margin = '0';
+        brandEl.style.padding = '0';
+
+        /* 본문 상단 여백 — fixed 헤더 높이만큼 */
+        var headerH = container.offsetHeight || 80;
+        var mainBlock = doc.querySelector('[data-testid="stMainBlockContainer"]');
+        if (mainBlock) {
+            mainBlock.style.paddingTop = headerH + 'px';
         }
+
+        /* active 탭 상태 갱신 함수 */
+        function refreshActiveState() {
+            var tabs2 = tablistEl.querySelectorAll('[role="tab"]');
+            var btns = tabBar.querySelectorAll('button');
+            tabs2.forEach(function(t, i) {
+                if (i < btns.length) {
+                    var active = t.getAttribute('aria-selected') === 'true';
+                    btns[i].style.fontWeight = active ? '600' : '400';
+                    btns[i].style.color = active ? '#3f51b5' : '#666';
+                    btns[i].style.borderBottom = '2px solid ' + (active ? '#3f51b5' : 'transparent');
+                }
+            });
+        }
+
+        /* MutationObserver로 탭 전환 감지 */
+        var observer = new MutationObserver(function() {
+            refreshActiveState();
+        });
+        origTabs.forEach(function(t) {
+            observer.observe(t, { attributes: true, attributeFilter: ['aria-selected'] });
+        });
     }
-    setTimeout(applyBrandSticky, 300);
-    setTimeout(applyBrandSticky, 1000);
-    setTimeout(applyBrandSticky, 2500);
-    setTimeout(applyBrandSticky, 5000);
+
+    setTimeout(createFixedHeader, 500);
+    setTimeout(createFixedHeader, 1500);
+    setTimeout(createFixedHeader, 3000);
 })();
 </script>
 """, height=0)
