@@ -2824,8 +2824,8 @@ st.markdown("""
     }
 
     /* 본문 — 13px (타이틀 p 태그 제외) */
-    .stMarkdown p:not([style*="16px"]),
-    [data-testid="stMarkdownContainer"] p:not([style*="16px"]),
+    .stMarkdown p:not([style*="17px"]),
+    [data-testid="stMarkdownContainer"] p:not([style*="17px"]),
     .stMarkdown li, [data-testid="stMarkdownContainer"] li {
         font-size: 13px !important;
         line-height: 1.6 !important;
@@ -2967,15 +2967,19 @@ st.markdown("""
         cursor: default !important;
     }
 
-    /* 버튼 — 너비 제한 + 완전 중앙 정렬 */
-    .stButton > button {
-        max-width: 320px !important;
+    /* 버튼 — 완전 중앙 정렬 */
+    .stButton > button,
+    button[kind="primary"],
+    button[kind="secondary"] {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         vertical-align: middle !important;
-        padding-top: 8px !important;
-        padding-bottom: 8px !important;
+        padding: 8px 16px !important;
+        line-height: 1.4 !important;
+    }
+    .stButton > button {
+        max-width: 320px !important;
     }
     .stButton {
         display: flex;
@@ -2983,7 +2987,7 @@ st.markdown("""
         align-items: center;
     }
 
-    /* 드롭다운(셀렉트박스) 내부 텍스트 중앙 정렬 */
+    /* 드롭다운(셀렉트박스) 내부 텍스트 중앙 정렬 + 13px */
     [data-baseweb="select"] {
         display: flex !important;
         align-items: center !important;
@@ -2993,9 +2997,14 @@ st.markdown("""
         align-items: center !important;
         min-height: 38px !important;
     }
-    [data-baseweb="select"] span {
-        display: flex !important;
-        align-items: center !important;
+    [data-baseweb="select"] span,
+    [data-baseweb="select"] div,
+    [data-baseweb="select"] option,
+    [data-baseweb="popover"] li,
+    [data-baseweb="menu"] li,
+    [role="listbox"] li,
+    [role="option"] {
+        font-size: 13px !important;
     }
 
     /* 인풋 필드 텍스트 중앙 정렬 */
@@ -3108,7 +3117,7 @@ with tab_intro:
     st.divider()
 
     # Problem Statement
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">기존 A/B 테스트의 한계</p>", unsafe_allow_html=True)
+    st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">기존 A/B 테스트의 한계</p>", unsafe_allow_html=True)
     col_p1, col_p2, col_p3 = st.columns(3)
     with col_p1:
         st.markdown("#### ⏱️ 시간")
@@ -3123,7 +3132,7 @@ with tab_intro:
     st.divider()
 
     # Solution
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">TwinPilot의 접근</p>", unsafe_allow_html=True)
+    st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">TwinPilot의 접근</p>", unsafe_allow_html=True)
     st.markdown("""
     과거 고객 행동 데이터를 기반으로 **디지털 트윈(가상 유저)**을 생성하고,
     두 가지 시나리오에 대한 반응을 시뮬레이션하여 **실제 테스트 전에 결과를 예측**합니다.
@@ -3133,7 +3142,7 @@ with tab_intro:
     st.divider()
 
     # How it works — 3-step flow
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">데모 이용 플로우</p>", unsafe_allow_html=True)
+    st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">데모 이용 플로우</p>", unsafe_allow_html=True)
     col_s1, col_s2, col_s3 = st.columns(3)
     with col_s1:
         st.markdown("""
@@ -3163,7 +3172,7 @@ with tab_intro:
     st.divider()
 
     # Key Features
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">핵심 기능</p>", unsafe_allow_html=True)
+    st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">핵심 기능</p>", unsafe_allow_html=True)
     col_f1, col_f2, col_f3 = st.columns(3)
     with col_f1:
         st.markdown('<div class="feature-icon">🎯</div>', unsafe_allow_html=True)
@@ -3181,7 +3190,7 @@ with tab_intro:
     st.divider()
 
     # Supported Industries
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">지원 업종</p>", unsafe_allow_html=True)
+    st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">지원 업종</p>", unsafe_allow_html=True)
     col_i1, col_i2, col_i3, col_i4 = st.columns(4)
     with col_i1:
         st.markdown("#### 🛍️ 이커머스")
@@ -3199,7 +3208,7 @@ with tab_intro:
     st.divider()
 
     # Tech Stack
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">기술 스택</p>", unsafe_allow_html=True)
+    st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">기술 스택</p>", unsafe_allow_html=True)
     col_t1, col_t2, col_t3 = st.columns(3)
     with col_t1:
         st.markdown("#### Markov Chain")
@@ -3216,12 +3225,12 @@ with tab_intro:
 # Tab 2: 이용 가이드
 # ══════════════════════════════════════════════
 with tab_guide:
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">📖 이용 가이드</p>", unsafe_allow_html=True)
+    st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">📖 이용 가이드</p>", unsafe_allow_html=True)
     st.markdown("TwinPilot 데모 기능을 이용하는 3단계 가이드입니다.")
     st.divider()
 
     # Step 1
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">Step 1: 고객 데이터 셋팅</p>", unsafe_allow_html=True)
+    st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">Step 1: 고객 데이터 셋팅</p>", unsafe_allow_html=True)
     st.markdown("""
     두 가지 방법 중 하나를 선택합니다:
     - **샘플 데이터 사용**: 업종(패션 이커머스, 금융, OTT)을 선택하면 가상 데이터가 자동 생성됩니다.
@@ -3265,7 +3274,7 @@ user_0001,sess_abc123,purchase,2024-01-15T10:35:00,/order-complete,mobile,iOS,""
     st.divider()
 
     # Step 2
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">Step 2: 시나리오 설정</p>", unsafe_allow_html=True)
+    st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">Step 2: 시나리오 설정</p>", unsafe_allow_html=True)
     st.markdown("""
     비교할 두 가지 시나리오를 설정합니다.
     """)
@@ -3291,7 +3300,7 @@ user_0001,sess_abc123,purchase,2024-01-15T10:35:00,/order-complete,mobile,iOS,""
     st.divider()
 
     # Step 3
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">Step 3: 결과 리포트</p>", unsafe_allow_html=True)
+    st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">Step 3: 결과 리포트</p>", unsafe_allow_html=True)
     st.markdown("시뮬레이션 완료 후 7개 섹션의 리포트가 제공됩니다.")
 
     report_sections = pd.DataFrame({
@@ -3315,7 +3324,7 @@ user_0001,sess_abc123,purchase,2024-01-15T10:35:00,/order-complete,mobile,iOS,""
     st.divider()
 
     # FAQ
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">FAQ</p>", unsafe_allow_html=True)
+    st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">FAQ</p>", unsafe_allow_html=True)
     with st.expander("디지털 트윈이란 무엇인가요?"):
         st.markdown("""
         디지털 트윈은 실제 유저의 행동 패턴을 학습한 가상 유저입니다.
@@ -3410,7 +3419,7 @@ with tab_demo:
     # STEP 1
     # ══════════════════════════════════════
     if current_step == 1:
-        st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">1. 고객 데이터 셋팅</p>", unsafe_allow_html=True)
+        st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">1. 고객 데이터 셋팅</p>", unsafe_allow_html=True)
         data_method = st.radio("데이터 소스를 선택하세요", options=["🎲 샘플 데이터 사용", "📁 직접 파일 업로드"], horizontal=True, label_visibility="collapsed")
 
         if data_method == "🎲 샘플 데이터 사용":
@@ -3460,7 +3469,7 @@ with tab_demo:
             col_m3.metric("프로파일", f"{ur.profile_count:,}")
             col_m4.metric("세그먼트", f"{ur.base_segment_count}")
 
-        st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">2. 시나리오 설정</p>", unsafe_allow_html=True)
+        st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">2. 시나리오 설정</p>", unsafe_allow_html=True)
 
         use_sample_scenario = False
         if st.session_state.get("data_source") == "sample":
@@ -3531,7 +3540,7 @@ with tab_demo:
 
         # 리포트 다운로드 + 새 시나리오 버튼은 아래에서 처리
 
-        st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">3. 실험 결과</p>", unsafe_allow_html=True)
+        st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">3. 실험 결과</p>", unsafe_allow_html=True)
 
         # 자동 인사이트
         insights = generate_insights(report)
@@ -3554,7 +3563,7 @@ with tab_demo:
 
         # 핵심 지표
         variant_ids = sorted(report.variant_metrics.keys())
-        st.markdown("<p style=\"font-size:16px !important; font-weight:700 !important; margin:0.4rem 0 0.3rem 0; color:#333 !important;\">핵심 지표 비교</p>", unsafe_allow_html=True)
+        st.markdown("<p style=\"font-size:17px !important; font-weight:700 !important; margin:0.5rem 0 0.4rem 0; color:#222 !important;\">핵심 지표 비교</p>", unsafe_allow_html=True)
         metrics_data = []
         for vid in variant_ids:
             vr = report.variant_metrics[vid]
