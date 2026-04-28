@@ -2704,250 +2704,268 @@ st.set_page_config(
 )
 
 # ──────────────────────────────────────────────
-# 커스텀 CSS (Pretendard 폰트 + 브랜딩)
+# 커스텀 CSS (Toss-style: Pretendard + 클린 화이트)
 # ──────────────────────────────────────────────
 st.markdown("""
 <style>
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
 
+    /* ── 글로벌 폰트 & 배경 ── */
     html, body, [class*="css"] {
         font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        background-color: #ffffff !important;
     }
-
-    /* Streamlit 내부 요소 전체 폰트 강제 적용 (레이아웃 요소 제외) */
     .stMarkdown, .stMarkdown *,
     [data-testid="stMarkdownContainer"],
     [data-testid="stMarkdownContainer"] * {
         font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     }
+    .stApp, [data-testid="stAppViewContainer"],
+    [data-testid="stAppViewBlockContainer"] {
+        background-color: #ffffff !important;
+    }
 
-    /* 좌상단 서비스명 */
+    /* ── 브랜드 헤더 ── */
     .brand-header {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 0 0 16px 0;
-        border-bottom: 2px solid #e8eaf6;
-        margin-bottom: 20px;
+        gap: 8px;
+        padding: 0 0 12px 0;
+        margin-bottom: 8px;
     }
     .brand-name {
-        font-size: 1.4rem;
-        font-weight: 800;
-        color: #3f51b5;
-        letter-spacing: -0.5px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #191f28;
+        letter-spacing: -0.3px;
     }
     .brand-tag {
-        font-size: 0.75rem;
-        color: #999;
+        font-size: 13px;
+        color: #8b95a1;
         font-weight: 400;
-        margin-left: 4px;
+        margin-left: 2px;
     }
 
-    /* 메인 타이틀 */
+    /* ── 히어로 타이틀 ── */
     .main-title {
-        font-size: 2.8rem;
+        font-size: 36px;
         font-weight: 800;
-        background: linear-gradient(135deg, #3f51b5, #7c4dff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.3rem;
-        letter-spacing: -1px;
+        color: #191f28;
+        margin-bottom: 4px;
+        letter-spacing: -0.8px;
+        line-height: 1.3;
     }
     .subtitle {
-        font-size: 1.1rem;
-        color: #777;
-        margin-bottom: 2rem;
+        font-size: 18px;
+        color: #8b95a1;
+        margin-bottom: 48px;
         font-weight: 400;
-        line-height: 1.6;
+        line-height: 1.7;
     }
 
-    /* 3단 카드 */
-    .step-card {
-        background: #f8f9fc;
-        border-radius: 14px;
-        padding: 1.8rem 1.2rem;
-        text-align: center;
-        border: 1px solid #e8eaf6;
-        transition: box-shadow 0.2s;
-    }
-    .step-card:hover {
-        box-shadow: 0 4px 16px rgba(63, 81, 181, 0.1);
-    }
-    .step-card h4 {
-        font-size: 1.05rem;
-        font-weight: 700;
-        margin: 0.6rem 0 0.4rem 0;
-        color: #333;
-    }
-    .step-card p {
-        font-size: 0.88rem;
-        color: #666;
-        line-height: 1.5;
-        margin: 0;
-    }
-    .step-number {
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: #3f51b5;
-    }
-
-    /* 섹션 제목 — 15px 통일 */
+    /* ── 섹션 제목 (h1, h2, subheader) ── */
     .stMarkdown h1 {
-        font-size: 15px !important;
-        font-weight: 700;
-        margin-top: 0.4rem;
-        margin-bottom: 0.3rem;
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        color: #191f28 !important;
+        margin-top: 0.5rem;
+        margin-bottom: 0.4rem;
     }
     .stMarkdown h2, [data-testid="stHeadingWithActionElements"] {
-        font-size: 15px !important;
-        font-weight: 700;
-        margin-top: 0.3rem;
-        margin-bottom: 0.25rem;
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        color: #191f28 !important;
+        margin-top: 0.4rem;
+        margin-bottom: 0.3rem;
         letter-spacing: -0.3px;
     }
     [data-testid="stSubheader"], .stSubheader,
     [data-testid="stHeader"] {
-        font-size: 15px !important;
+        font-size: 20px !important;
+        color: #191f28 !important;
     }
     .stMarkdown h3 {
-        font-size: 14px !important;
-        font-weight: 600;
-        margin-top: 0.25rem;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        color: #191f28 !important;
+        margin-top: 0.3rem;
         margin-bottom: 0.2rem;
     }
     .stMarkdown h4 {
-        font-size: 13px !important;
-        font-weight: 600;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        color: #333d4b !important;
         margin-top: 0.2rem;
         margin-bottom: 0.15rem;
-        color: #444;
     }
 
-    /* 본문 — 13px 통일 (테이블, 필터, 버튼 포함) */
+    /* ── 본문 텍스트 14px ── */
     .stMarkdown p, [data-testid="stMarkdownContainer"] p,
     .stMarkdown li, [data-testid="stMarkdownContainer"] li {
-        font-size: 13px !important;
-        line-height: 1.6 !important;
+        font-size: 14px !important;
+        line-height: 1.7 !important;
+        color: #4e5968 !important;
         margin-bottom: 0.4rem;
     }
     td, th {
-        font-size: 13px !important;
-        line-height: 1.4 !important;
+        font-size: 14px !important;
+        line-height: 1.5 !important;
+        color: #4e5968 !important;
     }
-    /* Streamlit dataframe 내부 (iframe 포함) */
-    [data-testid="stDataFrame"] * {
-        font-size: 13px !important;
-    }
-    .dvn-scroller * {
-        font-size: 13px !important;
-    }
-    [data-testid="glideDataEditor"] * {
-        font-size: 13px !important;
-    }
-    /* 버튼 텍스트 */
     .stButton > button, [data-testid="stDownloadButton"] button {
-        font-size: 13px !important;
+        font-size: 14px !important;
     }
-    /* 입력 필드, 셀렉트, 슬라이더 라벨 */
     .stTextInput label, .stSelectbox label, .stSlider label,
     .stRadio label, .stCheckbox label, .stFileUploader label,
     .stTextInput input, .stSelectbox select,
     [data-baseweb="select"] span,
     [data-baseweb="input"] input {
-        font-size: 13px !important;
+        font-size: 14px !important;
     }
-    /* 캡션, 메트릭 라벨 */
+
+    /* ── 데이터프레임 14px 강제 ── */
+    [data-testid="stDataFrame"] * {
+        font-size: 14px !important;
+    }
+    .dvn-scroller * {
+        font-size: 14px !important;
+    }
+    [data-testid="glideDataEditor"] * {
+        font-size: 14px !important;
+    }
+
+    /* ── 캡션, 메트릭 ── */
     .stCaption, [data-testid="stCaptionContainer"] {
         font-size: 12px !important;
+        color: #8b95a1 !important;
     }
     [data-testid="stMetricLabel"] {
-        font-size: 13px !important;
+        font-size: 14px !important;
+        color: #4e5968 !important;
     }
-    /* FAQ 내부 텍스트 */
+
+    /* ── FAQ / Expander ── */
     .streamlit-expanderContent p,
     .streamlit-expanderContent li,
     [data-testid="stExpander"] p,
     [data-testid="stExpander"] li {
-        font-size: 13px !important;
-        line-height: 1.6 !important;
+        font-size: 14px !important;
+        line-height: 1.7 !important;
+        color: #4e5968 !important;
     }
     .streamlit-expanderHeader, [data-testid="stExpander"] summary {
-        font-size: 13px !important;
-    }
-    /* 탭 텍스트 */
-    .stTabs [data-baseweb="tab"] {
-        font-size: 13px !important;
+        font-size: 14px !important;
+        color: #333d4b !important;
     }
 
-    /* 영역 간격 */
-    .stDivider {
-        margin-top: 1rem;
-        margin-bottom: 1rem;
+    /* ── 스텝 카드 (Toss 스타일) ── */
+    .step-card {
+        background: #f2f4f6;
+        border-radius: 16px;
+        padding: 28px 20px;
+        text-align: center;
+        border: none;
+        transition: background 0.2s;
     }
-    [data-testid="stVerticalBlock"] > div {
-        margin-bottom: 0.3rem;
+    .step-card:hover {
+        background: #e8ebee;
     }
-    .stSubheader {
-        margin-top: 0.5rem;
+    .step-card h4 {
+        font-size: 16px;
+        font-weight: 700;
+        margin: 12px 0 8px 0;
+        color: #191f28;
+    }
+    .step-card p {
+        font-size: 14px;
+        color: #4e5968;
+        line-height: 1.6;
+        margin: 0;
+    }
+    .step-number {
+        font-size: 28px;
+        font-weight: 800;
+        color: #3182f6;
     }
 
-    /* 탭 내부 간격 — 위에서 통합 처리 */
+    /* ── 피처 아이콘 ── */
+    .feature-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
 
+    /* ── 배지 ── */
+    .badge-significant {
+        background: #3182f6;
+        color: white;
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        vertical-align: middle;
+    }
+    .badge-not-significant {
+        background: #8b95a1;
+        color: white;
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        vertical-align: middle;
+    }
+
+    /* ── 메트릭 하이라이트 ── */
     .metric-highlight {
         font-size: 1.8rem;
         font-weight: 700;
-        color: #3f51b5;
-    }
-    .badge-significant {
-        background: #4caf50;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.82rem;
-        font-weight: 600;
-    }
-    .badge-not-significant {
-        background: #ff9800;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.82rem;
-        font-weight: 600;
-    }
-    .feature-icon {
-        font-size: 2.2rem;
-        margin-bottom: 0.4rem;
+        color: #3182f6;
     }
 
-    /* 탭 — 브랜드 헤더와 같은 레벨, 구분 강화 */
+    /* ── 탭 (Toss 스타일: 클린 블루 언더라인) ── */
     .stTabs [data-baseweb="tab-list"] {
         gap: 0;
-        border-bottom: 2px solid #e0e0e0;
+        border-bottom: 1px solid #e5e8eb;
     }
     .stTabs [data-baseweb="tab"] {
         font-family: 'Pretendard', sans-serif;
         font-weight: 600;
-        font-size: 0.9rem;
-        padding: 8px 20px;
-        border-bottom: 3px solid transparent;
-        margin-bottom: -2px;
+        font-size: 14px !important;
+        color: #8b95a1;
+        padding: 10px 20px;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
     }
     .stTabs [aria-selected="true"] {
-        border-bottom: 3px solid #3f51b5 !important;
-        color: #3f51b5 !important;
+        border-bottom: 2px solid #3182f6 !important;
+        color: #191f28 !important;
     }
     .stTabs [data-baseweb="tab-panel"] {
-        padding-top: 1rem;
+        padding-top: 1.5rem;
     }
 
-    /* 헤더 앵커 링크 숨기기 */
+    /* ── 영역 간격 ── */
+    .stDivider {
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    [data-testid="stVerticalBlock"] > div {
+        margin-bottom: 0.3rem;
+    }
+
+    /* ── 헤더 앵커 링크 숨기기 ── */
     h1 a, h2 a, h3 a, h4 a, h5 a, h6 a,
     .stMarkdown a[href^="#"],
     [data-testid="stHeaderActionElements"] {
         display: none !important;
     }
 
-    /* 데이터프레임 컬럼 소팅 완전 비활성화 */
+    /* ── 데이터프레임 소팅 비활성화 ── */
     [data-testid="stDataFrame"] th button,
     [data-testid="stDataFrame"] [role="columnheader"] button,
     .dvn-scroller th button,
@@ -2959,13 +2977,14 @@ st.markdown("""
         cursor: default !important;
     }
 
-    /* 버튼 — 너비 제한 + 중앙 정렬 */
+    /* ── 버튼 ── */
     .stButton > button {
         max-width: 320px !important;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         vertical-align: middle;
+        border-radius: 8px;
     }
     .stButton {
         display: flex;
@@ -2973,70 +2992,158 @@ st.markdown("""
         align-items: center;
     }
 
-    /* 전체 컨테이너 */
+    /* ── 전체 컨테이너 ── */
     .block-container {
-        max-width: 860px !important;
-        padding-left: 1.5rem !important;
-        padding-right: 1.5rem !important;
+        max-width: 900px !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
     }
 
-    /* 메트릭 카드 — 중앙 정렬 */
+    /* ── 메트릭 카드 ── */
     [data-testid="stMetric"] {
-        background: #f8f9fc;
-        border-radius: 8px;
-        padding: 10px 14px;
+        background: #f2f4f6;
+        border-radius: 12px;
+        padding: 12px 16px;
         display: flex;
         flex-direction: column;
         justify-content: center;
     }
 
-    /* 배지 중앙 정렬 */
-    .badge-significant, .badge-not-significant {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        vertical-align: middle;
-    }
-
-    /* 라디오/체크박스 중앙 정렬 */
+    /* ── 라디오/체크박스 ── */
     .stRadio > div, .stCheckbox > div {
         display: flex;
         align-items: center;
     }
 
-    /* expander 헤더 중앙 정렬 */
+    /* ── Expander 헤더 ── */
     .streamlit-expanderHeader {
-        font-size: 0.9rem;
+        font-size: 14px;
     }
 
-    /* 텍스트형 버튼 (back_to_data, back_to_scenario, csv 다운로드) */
+    /* ── 텍스트형 버튼 (뒤로가기, 다운로드) ── */
     [data-testid="stButton"][key="back_to_data"] button,
     [data-testid="stButton"][key="back_to_scenario"] button,
     button[kind="secondary"] {
         background: none !important;
         border: none !important;
         box-shadow: none !important;
-        color: #888 !important;
-        font-size: 0.82rem !important;
+        color: #8b95a1 !important;
+        font-size: 14px !important;
         padding: 4px 8px !important;
-        text-decoration: underline !important;
     }
     button[kind="secondary"]:hover {
-        color: #3f51b5 !important;
+        text-decoration: underline !important;
+        color: #3182f6 !important;
     }
 
-    /* 다운로드 버튼도 텍스트형으로 */
+    /* ── 다운로드 버튼 텍스트형 ── */
     [data-testid="stDownloadButton"] button {
         background: none !important;
         border: none !important;
         box-shadow: none !important;
-        color: #888 !important;
-        font-size: 0.82rem !important;
+        color: #8b95a1 !important;
+        font-size: 14px !important;
         padding: 4px 8px !important;
-        text-decoration: underline !important;
     }
     [data-testid="stDownloadButton"] button:hover {
-        color: #3f51b5 !important;
+        text-decoration: underline !important;
+        color: #3182f6 !important;
+    }
+
+    /* ── 인트로 섹션 타이틀 ── */
+    .section-title {
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        color: #191f28 !important;
+        margin: 0 0 16px 0;
+        letter-spacing: -0.3px;
+    }
+    .section-desc {
+        font-size: 14px;
+        color: #4e5968;
+        line-height: 1.7;
+    }
+
+    /* ── 인트로 피처 카드 ── */
+    .feature-card {
+        background: #f2f4f6;
+        border-radius: 16px;
+        padding: 24px 20px;
+    }
+    .feature-card-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #191f28;
+        margin: 8px 0 6px 0;
+    }
+    .feature-card-desc {
+        font-size: 14px;
+        color: #4e5968;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    /* ── 인트로 인더스트리 카드 ── */
+    .industry-card {
+        background: #f2f4f6;
+        border-radius: 16px;
+        padding: 20px 16px;
+    }
+    .industry-card-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #191f28;
+        margin: 0 0 6px 0;
+    }
+    .industry-card-desc {
+        font-size: 13px;
+        color: #4e5968;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    /* ── 인트로 테크 카드 ── */
+    .tech-card {
+        background: #f2f4f6;
+        border-radius: 16px;
+        padding: 24px 20px;
+    }
+    .tech-card-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #191f28;
+        margin: 0 0 6px 0;
+    }
+    .tech-card-desc {
+        font-size: 14px;
+        color: #4e5968;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    /* ── 문제 카드 ── */
+    .problem-card {
+        background: #f2f4f6;
+        border-radius: 16px;
+        padding: 24px 20px;
+        text-align: center;
+    }
+    .problem-card-icon {
+        font-size: 28px;
+        margin-bottom: 8px;
+        color: #3182f6;
+    }
+    .problem-card-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #191f28;
+        margin: 0 0 6px 0;
+    }
+    .problem-card-desc {
+        font-size: 14px;
+        color: #4e5968;
+        line-height: 1.6;
+        margin: 0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -3046,7 +3153,6 @@ st.markdown("""
 # ──────────────────────────────────────────────
 st.markdown("""
 <div class="brand-header">
-    <span style="font-size:1.5rem;">🧬</span>
     <span class="brand-name">TwinPilot</span>
     <span class="brand-tag">Digital Twin A/B Testing</span>
 </div>
@@ -3067,41 +3173,58 @@ tab_intro, tab_guide, tab_demo = st.tabs([
 # Tab 1: 서비스 소개
 # ══════════════════════════════════════════════
 with tab_intro:
-    # Hero
+    # ── Hero ──
+    st.markdown('<div style="height: 24px;"></div>', unsafe_allow_html=True)
     st.markdown('<p class="main-title">TwinPilot</p>', unsafe_allow_html=True)
     st.markdown(
         '<p class="subtitle">고객 행동 데이터 기반 디지털 트윈으로<br>A/B 테스트 결과를 사전에 시뮬레이션합니다.</p>',
         unsafe_allow_html=True,
     )
-    st.divider()
 
-    # Problem Statement
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700; margin:0.4rem 0 0.3rem 0;\">기존 A/B 테스트의 한계</p>", unsafe_allow_html=True)
+    # ── 기존 A/B 테스트의 한계 ──
+    st.markdown('<p class="section-title">기존 A/B 테스트의 한계</p>', unsafe_allow_html=True)
     col_p1, col_p2, col_p3 = st.columns(3)
     with col_p1:
-        st.markdown("#### ⏱️ 시간")
-        st.markdown("통계적 유의성 확보까지 최소 2~4주 소요. 빠른 의사결정이 어렵습니다.")
+        st.markdown("""
+        <div class="problem-card">
+            <div class="problem-card-icon">⏱</div>
+            <p class="problem-card-title">시간</p>
+            <p class="problem-card-desc">통계적 유의성 확보까지 최소 2~4주 소요.<br>빠른 의사결정이 어렵습니다.</p>
+        </div>
+        """, unsafe_allow_html=True)
     with col_p2:
-        st.markdown("#### 💰 비용")
-        st.markdown("실제 트래픽을 분할해야 하므로 매출 손실 리스크가 존재합니다.")
+        st.markdown("""
+        <div class="problem-card">
+            <div class="problem-card-icon">₩</div>
+            <p class="problem-card-title">비용</p>
+            <p class="problem-card-desc">실제 트래픽을 분할해야 하므로<br>매출 손실 리스크가 존재합니다.</p>
+        </div>
+        """, unsafe_allow_html=True)
     with col_p3:
-        st.markdown("#### 📊 트래픽")
-        st.markdown("충분한 샘플 확보를 위해 대규모 트래픽이 필요합니다.")
+        st.markdown("""
+        <div class="problem-card">
+            <div class="problem-card-icon">↗</div>
+            <p class="problem-card-title">트래픽</p>
+            <p class="problem-card-desc">충분한 샘플 확보를 위해<br>대규모 트래픽이 필요합니다.</p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.divider()
+    st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
 
-    # Solution
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700; margin:0.4rem 0 0.3rem 0;\">TwinPilot의 접근</p>", unsafe_allow_html=True)
+    # ── TwinPilot의 접근 ──
+    st.markdown('<p class="section-title">TwinPilot의 접근</p>', unsafe_allow_html=True)
     st.markdown("""
-    과거 고객 행동 데이터를 기반으로 **디지털 트윈(가상 유저)**을 생성하고,
-    두 가지 시나리오에 대한 반응을 시뮬레이션하여 **실제 테스트 전에 결과를 예측**합니다.
+    <p class="section-desc">
+    과거 고객 행동 데이터를 기반으로 <strong>디지털 트윈(가상 유저)</strong>을 생성하고,
+    두 가지 시나리오에 대한 반응을 시뮬레이션하여 <strong>실제 테스트 전에 결과를 예측</strong>합니다.
     동일한 가상 유저가 시나리오 A와 B를 모두 경험하므로, 순수한 시나리오 효과를 비교할 수 있습니다.
-    """)
+    </p>
+    """, unsafe_allow_html=True)
 
-    st.divider()
+    st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
 
-    # How it works — 3-step flow
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700; margin:0.4rem 0 0.3rem 0;\">데모 이용 플로우</p>", unsafe_allow_html=True)
+    # ── 데모 이용 플로우 ──
+    st.markdown('<p class="section-title">데모 이용 플로우</p>', unsafe_allow_html=True)
     col_s1, col_s2, col_s3 = st.columns(3)
     with col_s1:
         st.markdown("""
@@ -3128,56 +3251,96 @@ with tab_intro:
         </div>
         """, unsafe_allow_html=True)
 
-    st.divider()
+    st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
 
-    # Key Features
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700; margin:0.4rem 0 0.3rem 0;\">핵심 기능</p>", unsafe_allow_html=True)
+    # ── 핵심 기능 ──
+    st.markdown('<p class="section-title">핵심 기능</p>', unsafe_allow_html=True)
     col_f1, col_f2, col_f3 = st.columns(3)
     with col_f1:
-        st.markdown('<div class="feature-icon">🎯</div>', unsafe_allow_html=True)
-        st.markdown("**세그먼트별 차별 반응 분석**")
-        st.markdown("시나리오 유형에 맞는 주요 변수를 자동 도출하고, 해당 변수 기반으로 유저를 세그먼트화하여 그룹별 반응 차이를 분석합니다.")
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <p class="feature-card-title">세그먼트별 차별 반응 분석</p>
+            <p class="feature-card-desc">시나리오 유형에 맞는 주요 변수를 자동 도출하고, 해당 변수 기반으로 유저를 세그먼트화하여 그룹별 반응 차이를 분석합니다.</p>
+        </div>
+        """, unsafe_allow_html=True)
     with col_f2:
-        st.markdown('<div class="feature-icon">🔬</div>', unsafe_allow_html=True)
-        st.markdown("**동일 유저 대상 비교**")
-        st.markdown("동일한 디지털 트윈이 시나리오 A와 B를 모두 경험합니다. 유저 구성 차이 없이 순수한 시나리오 효과만 비교할 수 있습니다.")
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🔬</div>
+            <p class="feature-card-title">동일 유저 대상 비교</p>
+            <p class="feature-card-desc">동일한 디지털 트윈이 시나리오 A와 B를 모두 경험합니다. 유저 구성 차이 없이 순수한 시나리오 효과만 비교할 수 있습니다.</p>
+        </div>
+        """, unsafe_allow_html=True)
     with col_f3:
-        st.markdown('<div class="feature-icon">📊</div>', unsafe_allow_html=True)
-        st.markdown("**통계적 유의성 검증**")
-        st.markdown("카이제곱 검정, 95% 신뢰구간, Cohen's h 효과 크기로 결과의 통계적 신뢰도를 제공합니다.")
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <p class="feature-card-title">통계적 유의성 검증</p>
+            <p class="feature-card-desc">카이제곱 검정, 95% 신뢰구간, Cohen's h 효과 크기로 결과의 통계적 신뢰도를 제공합니다.</p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.divider()
+    st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
 
-    # Supported Industries
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700; margin:0.4rem 0 0.3rem 0;\">지원 업종</p>", unsafe_allow_html=True)
+    # ── 지원 업종 ──
+    st.markdown('<p class="section-title">지원 업종</p>', unsafe_allow_html=True)
     col_i1, col_i2, col_i3, col_i4 = st.columns(4)
     with col_i1:
-        st.markdown("#### 🛍️ 이커머스")
-        st.markdown("프로모션, 가격 표시, CTA 변경 등 구매 전환 최적화")
+        st.markdown("""
+        <div class="industry-card">
+            <p class="industry-card-title">이커머스</p>
+            <p class="industry-card-desc">프로모션, 가격 표시, CTA 변경 등 구매 전환 최적화</p>
+        </div>
+        """, unsafe_allow_html=True)
     with col_i2:
-        st.markdown("#### 🏦 금융")
-        st.markdown("상품 신청, 대출 퍼널, 상담 전환 등 금융 서비스 최적화")
+        st.markdown("""
+        <div class="industry-card">
+            <p class="industry-card-title">금융</p>
+            <p class="industry-card-desc">상품 신청, 대출 퍼널, 상담 전환 등 금융 서비스 최적화</p>
+        </div>
+        """, unsafe_allow_html=True)
     with col_i3:
-        st.markdown("#### 🎬 OTT/콘텐츠")
-        st.markdown("구독 전환, 콘텐츠 시청, 워치리스트 추가 등 콘텐츠 서비스 최적화")
+        st.markdown("""
+        <div class="industry-card">
+            <p class="industry-card-title">OTT / 콘텐츠</p>
+            <p class="industry-card-desc">구독 전환, 콘텐츠 시청, 워치리스트 추가 등 콘텐츠 서비스 최적화</p>
+        </div>
+        """, unsafe_allow_html=True)
     with col_i4:
-        st.markdown("#### 🔧 기타")
-        st.markdown("교육, 여행, 헬스케어 등 다양한 업종으로 확장 중. 커스텀 이벤트 로그를 업로드하면 어떤 서비스든 시뮬레이션 가능")
+        st.markdown("""
+        <div class="industry-card">
+            <p class="industry-card-title">기타</p>
+            <p class="industry-card-desc">교육, 여행, 헬스케어 등 다양한 업종. 커스텀 이벤트 로그 업로드로 시뮬레이션 가능</p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.divider()
+    st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
 
-    # Tech Stack
-    st.markdown("<p style=\"font-size:16px !important; font-weight:700; margin:0.4rem 0 0.3rem 0;\">기술 스택</p>", unsafe_allow_html=True)
+    # ── 기술 스택 ──
+    st.markdown('<p class="section-title">기술 스택</p>', unsafe_allow_html=True)
     col_t1, col_t2, col_t3 = st.columns(3)
     with col_t1:
-        st.markdown("#### Markov Chain")
-        st.markdown("세그먼트별 페이지 전이 확률 모델을 학습하여 현실적인 유저 여정을 시뮬레이션합니다.")
+        st.markdown("""
+        <div class="tech-card">
+            <p class="tech-card-title">Markov Chain</p>
+            <p class="tech-card-desc">세그먼트별 페이지 전이 확률 모델을 학습하여 현실적인 유저 여정을 시뮬레이션합니다.</p>
+        </div>
+        """, unsafe_allow_html=True)
     with col_t2:
-        st.markdown("#### K-Means Clustering")
-        st.markdown("시나리오별 주요 변수를 기반으로 유저를 동적으로 세그먼트화합니다.")
+        st.markdown("""
+        <div class="tech-card">
+            <p class="tech-card-title">K-Means Clustering</p>
+            <p class="tech-card-desc">시나리오별 주요 변수를 기반으로 유저를 동적으로 세그먼트화합니다.</p>
+        </div>
+        """, unsafe_allow_html=True)
     with col_t3:
-        st.markdown("#### 카이제곱 검정")
-        st.markdown("시나리오 간 전환율 차이의 통계적 유의성을 검증합니다.")
+        st.markdown("""
+        <div class="tech-card">
+            <p class="tech-card-title">카이제곱 검정</p>
+            <p class="tech-card-desc">시나리오 간 전환율 차이의 통계적 유의성을 검증합니다.</p>
+        </div>
+        """, unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════
