@@ -26,7 +26,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-import streamlit.components.v1 as components
 from plotly.subplots import make_subplots
 from scipy.stats import chi2_contingency
 from sklearn.cluster import KMeans
@@ -3142,8 +3141,6 @@ st.markdown("""
     [data-testid="stDownloadButton"] button:hover {
         color: #3f51b5 !important;
     }
-
-    /* 상단 고정 헤더 — JS(position:fixed)에서 처리 */
 </style>
 """, unsafe_allow_html=True)
 
@@ -3216,148 +3213,6 @@ tab_intro, tab_guide, tab_demo = st.tabs([
     "📖 이용 가이드",
     "🚀 데모",
 ])
-
-# 브랜드 헤더 + 탭 바 상단 고정 (position:fixed 클론 방식)
-components.html("""
-<script>
-(function() {
-    var doc = window.parent.document;
-
-    function createFixedHeader() {
-        /* 이미 생성된 경우 제거 후 재생성 */
-        var existing = doc.getElementById('tw-fixed-header');
-        if (existing) existing.remove();
-
-        var brandEl = doc.querySelector('.brand-header');
-        var tablistEl = doc.querySelector('[data-testid="stTabs"] [role="tablist"]');
-        if (!brandEl || !tablistEl) return;
-
-        /* fixed 컨테이너 생성 — 메인 콘텐츠 영역과 동일한 위치/너비 */
-        var container = doc.createElement('div');
-        container.id = 'tw-fixed-header';
-
-        /* Streamlit 메인 블록의 위치를 기준으로 정렬 */
-        var mainBlock = doc.querySelector('[data-testid="stMainBlockContainer"]');
-        var rect = mainBlock ? mainBlock.getBoundingClientRect() : null;
-
-        container.style.cssText = [
-            'position: fixed',
-            'top: 0',
-            'left: ' + (rect ? rect.left + 'px' : '0'),
-            'width: ' + (rect ? rect.width + 'px' : '100%'),
-            'z-index: 9999',
-            'background: #fff',
-            'box-shadow: 0 1px 4px rgba(0,0,0,0.08)',
-            'padding: 0',
-            'box-sizing: border-box',
-        ].join(';');
-
-        /* 브랜드 헤더 복제 — 원본 스타일 유지 */
-        var brandClone = brandEl.cloneNode(true);
-        brandClone.style.cssText = [
-            'padding: 10px 1rem 6px 1rem',
-            'margin: 0',
-        ].join(';');
-        container.appendChild(brandClone);
-
-        /* 탭 리스트 — 원본 탭 클릭을 프록시 */
-        var tabBar = doc.createElement('div');
-        tabBar.style.cssText = [
-            'display: flex',
-            'gap: 0',
-            'padding: 0 1rem',
-            'border-bottom: 1px solid #e0e0e0',
-            'background: #fff',
-        ].join(';');
-
-        var origTabs = tablistEl.querySelectorAll('[role="tab"]');
-        origTabs.forEach(function(origTab, idx) {
-            var btn = doc.createElement('button');
-            btn.textContent = origTab.textContent;
-            var isActive = origTab.getAttribute('aria-selected') === 'true';
-            btn.style.cssText = [
-                'background: none',
-                'border: none',
-                'padding: 8px 16px',
-                'cursor: pointer',
-                'font-size: 0.9rem',
-                'font-weight: ' + (isActive ? '600' : '400'),
-                'color: ' + (isActive ? '#3f51b5' : '#666'),
-                'border-bottom: 2px solid ' + (isActive ? '#3f51b5' : 'transparent'),
-                'transition: all 0.15s',
-                'white-space: nowrap',
-            ].join(';');
-            btn.addEventListener('click', function() {
-                origTab.click();
-                /* 약간의 딜레이 후 active 상태 갱신 */
-                setTimeout(refreshActiveState, 100);
-            });
-            btn.addEventListener('mouseenter', function() {
-                if (origTab.getAttribute('aria-selected') !== 'true') {
-                    btn.style.color = '#3f51b5';
-                }
-            });
-            btn.addEventListener('mouseleave', function() {
-                if (origTab.getAttribute('aria-selected') !== 'true') {
-                    btn.style.color = '#666';
-                }
-            });
-            tabBar.appendChild(btn);
-        });
-        container.appendChild(tabBar);
-        doc.body.appendChild(container);
-
-        /* 원본 브랜드 헤더와 탭 리스트 숨기기 */
-        brandEl.style.visibility = 'hidden';
-        brandEl.style.height = '0';
-        brandEl.style.overflow = 'hidden';
-        brandEl.style.margin = '0';
-        brandEl.style.padding = '0';
-
-        /* 본문 상단 여백 — fixed 헤더 높이만큼 */
-        var headerH = container.offsetHeight || 80;
-        var mainBlock = doc.querySelector('[data-testid="stMainBlockContainer"]');
-        if (mainBlock) {
-            mainBlock.style.paddingTop = headerH + 'px';
-        }
-
-        /* active 탭 상태 갱신 함수 */
-        function refreshActiveState() {
-            var tabs2 = tablistEl.querySelectorAll('[role="tab"]');
-            var btns = tabBar.querySelectorAll('button');
-            tabs2.forEach(function(t, i) {
-                if (i < btns.length) {
-                    var active = t.getAttribute('aria-selected') === 'true';
-                    btns[i].style.fontWeight = active ? '600' : '400';
-                    btns[i].style.color = active ? '#3f51b5' : '#666';
-                    btns[i].style.borderBottom = '2px solid ' + (active ? '#3f51b5' : 'transparent');
-                }
-            });
-        }
-
-        /* MutationObserver로 탭 전환 감지 */
-        var observer = new MutationObserver(function() {
-            refreshActiveState();
-        });
-        origTabs.forEach(function(t) {
-            observer.observe(t, { attributes: true, attributeFilter: ['aria-selected'] });
-        });
-
-        /* 리사이즈 시 fixed 헤더 위치/너비 재계산 */
-        window.parent.addEventListener('resize', function() {
-            if (!mainBlock) return;
-            var r = mainBlock.getBoundingClientRect();
-            container.style.left = r.left + 'px';
-            container.style.width = r.width + 'px';
-        });
-    }
-
-    setTimeout(createFixedHeader, 500);
-    setTimeout(createFixedHeader, 1500);
-    setTimeout(createFixedHeader, 3000);
-})();
-</script>
-""", height=0)
 
 
 # ══════════════════════════════════════════════
