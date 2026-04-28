@@ -306,6 +306,17 @@ class SimulationReport:
 
 # --- Pipeline Models ---
 
+@dataclass
+class ClusteringMeta:
+    """클러스터링 과정 메타데이터."""
+    algorithm: str = "K-Means"
+    feature_variables: List[str] = field(default_factory=list)
+    optimal_k: int = 0
+    silhouette_score: float = 0.0
+    total_profiles: int = 0
+    excluded_profiles: int = 0
+
+
 class PipelineError(Exception):
     """파이프라인 실행 중 특정 단계에서 발생한 오류."""
     def __init__(self, stage: str, message: str) -> None:
@@ -343,6 +354,7 @@ class PipelineUploadResult:
     excluded_user_count: int
     base_segments: List[Segment]
     base_segment_count: int
+    base_clustering_meta: Optional[ClusteringMeta] = None
 
 
 @dataclass
@@ -369,6 +381,8 @@ class PipelineSimulateResult:
     twin_count: int
     simulation_id: str
     report: SimulationReport
+    scenario_clustering_meta: Optional[ClusteringMeta] = None
+    scenario_segments: Optional[List[Segment]] = None
 
 
 @dataclass
@@ -962,8 +976,8 @@ def _generate_label(summary: SegmentSummary) -> str:
     return "_".join(parts)
 
 
-def cluster_profiles(profiles: List[UserProfile]) -> List[Segment]:
-    """K-Means 클러스터링으로 세그먼트를 생성한다."""
+def cluster_profiles(profiles: List[UserProfile]) -> Tuple[List[Segment], ClusteringMeta]:
+    """K-Means 클러스터링으로 세그먼트를 생성한다. (세그먼트 리스트, 메타데이터) 반환."""
     active_profiles = [p for p in profiles if p.status == "active"]
 
     if len(active_profiles) < 10:
@@ -972,11 +986,13 @@ def cluster_profiles(profiles: List[UserProfile]) -> List[Segment]:
             "최소 10개의 유효 프로파일이 필요합니다"
         )
 
+    base_features = ["avg_session_duration", "avg_pages_per_session", "conversion_rate", "bounce_rate", "price_sensitivity", "device(원핫)", "os(원핫)"]
     feature_matrix = build_feature_matrix(active_profiles)
     optimal_k = find_optimal_k(feature_matrix)
 
     km = KMeans(n_clusters=optimal_k, n_init=10, random_state=42)
     labels = km.fit_predict(feature_matrix)
+    sil_score = silhouette_score(feature_matrix, labels)
 
     cluster_map: Dict[int, List[UserProfile]] = {}
     for idx, label in enumerate(labels):
@@ -998,15 +1014,24 @@ def cluster_profiles(profiles: List[UserProfile]) -> List[Segment]:
         )
         segments.append(segment)
 
-    return segments
+    meta = ClusteringMeta(
+        algorithm="K-Means",
+        feature_variables=base_features,
+        optimal_k=optimal_k,
+        silhouette_score=sil_score,
+        total_profiles=len(profiles),
+        excluded_profiles=len(profiles) - len(active_profiles),
+    )
+
+    return segments, meta
 
 
 def recluster_for_scenario(
     profiles: List[UserProfile],
     key_variables: List[str],
     scenario_id: str,
-) -> List[Segment]:
-    """시나리오의 주요 행동 변수만을 피처로 사용하여 K-Means 재클러스터링을 수행한다."""
+) -> Tuple[List[Segment], ClusteringMeta]:
+    """시나리오의 주요 행동 변수만을 피처로 사용하여 K-Means 재클러스터링을 수행한다. (세그먼트 리스트, 메타데이터) 반환."""
     active_profiles = [p for p in profiles if p.status == "active"]
 
     if len(active_profiles) < 10:
@@ -1020,6 +1045,7 @@ def recluster_for_scenario(
 
     km = KMeans(n_clusters=optimal_k, n_init=10, random_state=42)
     labels = km.fit_predict(feature_matrix)
+    sil_score = silhouette_score(feature_matrix, labels)
 
     cluster_map: Dict[int, List[UserProfile]] = {}
     for idx, label in enumerate(labels):
@@ -1063,7 +1089,16 @@ def recluster_for_scenario(
         )
         segments.append(segment)
 
-    return segments
+    meta = ClusteringMeta(
+        algorithm="K-Means",
+        feature_variables=key_variables,
+        optimal_k=optimal_k,
+        silhouette_score=sil_score,
+        total_profiles=len(profiles),
+        excluded_profiles=len(profiles) - len(active_profiles),
+    )
+
+    return segments, meta
 
 
 # ──────────────────────────────────────────────
@@ -1077,6 +1112,30 @@ SCENARIO_VARIABLE_MAP: Dict[str, List[str]] = {
     "funnel_change": ["funnel_completion_rate", "bounce_rate", "avg_session_duration"],
     "ui_position": ["scroll_depth", "avg_pages_per_session", "bounce_rate"],
     "timing": ["visit_frequency", "avg_session_duration", "bounce_rate"],
+}
+
+VARIABLE_KR_MAP: Dict[str, str] = {
+    "price_sensitivity": "가격 민감도",
+    "coupon_apply_rate": "쿠폰 사용률",
+    "avg_purchase_value": "평균 구매 금액",
+    "purchase_frequency": "구매 빈도",
+    "conversion_rate": "전환율",
+    "bounce_rate": "이탈률",
+    "avg_pages_per_session": "세션당 페이지뷰",
+    "click_through_rate": "클릭률",
+    "funnel_completion_rate": "퍼널 완료율",
+    "avg_session_duration": "평균 세션 시간",
+    "scroll_depth": "스크롤 깊이",
+    "visit_frequency": "방문 빈도",
+}
+
+SCENARIO_TYPE_KR_MAP: Dict[str, str] = {
+    "promotion": "프로모션",
+    "cta_change": "CTA 변경",
+    "price_display": "가격 표시",
+    "funnel_change": "퍼널 변경",
+    "ui_position": "UI 배치",
+    "timing": "타이밍",
 }
 
 
@@ -2457,7 +2516,7 @@ def step1_upload(file_content: bytes, filename: str) -> PipelineUploadResult:
     excluded_count = len(profiles) - len(active_profiles)
 
     try:
-        base_segments = cluster_profiles(profiles)
+        base_segments, base_meta = cluster_profiles(profiles)
     except Exception as exc:
         raise PipelineError("segmentation", str(exc)) from exc
 
@@ -2470,6 +2529,7 @@ def step1_upload(file_content: bytes, filename: str) -> PipelineUploadResult:
         excluded_user_count=excluded_count,
         base_segments=base_segments,
         base_segment_count=len(base_segments),
+        base_clustering_meta=base_meta,
     )
 
 
@@ -2504,7 +2564,7 @@ def step2_simulate(
 
     # 3. Recluster for scenario
     try:
-        scenario_segments = recluster_for_scenario(profiles, key_variables, scenario.scenario_id)
+        scenario_segments, scenario_meta = recluster_for_scenario(profiles, key_variables, scenario.scenario_id)
     except Exception as exc:
         raise PipelineError("scenario_segmentation", str(exc)) from exc
 
@@ -2590,6 +2650,8 @@ def step2_simulate(
         twin_count=len(twins),
         simulation_id=sim_result.simulation_id,
         report=report,
+        scenario_clustering_meta=scenario_meta,
+        scenario_segments=scenario_segments,
     )
 
 
@@ -3518,11 +3580,39 @@ with tab_demo:
             col_m3.metric("프로파일", f"{ur.profile_count:,}")
             col_m4.metric("세그먼트", f"{ur.base_segment_count}")
 
-        with st.expander("🏷️ 기본 세그먼트 상세", expanded=False):
+        with st.expander("🏷️ 기본 세그먼트 생성 과정", expanded=False):
+            st.markdown("**기본 세그먼트란?** 업로드된 고객 행동 데이터를 분석하여 유사한 행동 패턴을 가진 유저들을 자동으로 그룹화한 결과입니다.")
+            st.markdown("")
+
+            # 생성 과정 단계별 설명
+            st.markdown("**📋 생성 과정**")
             st.markdown("""
-            **기본 세그먼트란?** 데이터 업로드 시 전체 행동 변수(전환율, 이탈률, 세션 시간, 디바이스 등)를 기반으로 K-Means 클러스터링을 수행하여 자동 생성된 유저 그룹입니다.
-            Silhouette Score를 기준으로 최적 그룹 수(2~10개)가 자동 결정됩니다.
+1. **프로파일링** — 각 유저의 이벤트 로그를 집계하여 행동 지표(전환율, 이탈률, 세션 시간 등)와 디바이스/OS 정보를 추출합니다.
+2. **피처 추출** — 아래 변수들을 수치 벡터로 변환하고 표준화(StandardScaler)합니다.
+3. **최적 그룹 수 탐색** — Silhouette Score를 기준으로 2~10개 범위에서 최적 클러스터 수를 자동 결정합니다.
+4. **K-Means 클러스터링** — 결정된 그룹 수로 유저를 분류합니다.
+5. **라벨 생성** — 각 그룹의 평균 특성(전환율, 디바이스, 탐색 패턴)을 기반으로 자연어 라벨을 자동 부여합니다.
             """)
+
+            # 클러스터링 메타데이터
+            meta = ur.base_clustering_meta
+            if meta:
+                st.markdown("**⚙️ 클러스터링 설정**")
+                meta_data = {
+                    "항목": ["알고리즘", "사용 변수", "최적 그룹 수 (K)", "Silhouette Score", "분석 대상 프로파일", "제외 프로파일 (데이터 부족)"],
+                    "값": [
+                        meta.algorithm,
+                        "전환율, 이탈률, 세션 시간, 페이지뷰, 가격 민감도, 디바이스(원핫), OS(원핫)",
+                        str(meta.optimal_k),
+                        f"{meta.silhouette_score:.3f}" + (" (양호)" if meta.silhouette_score >= 0.3 else " (보통)" if meta.silhouette_score >= 0.15 else " (낮음)"),
+                        f"{meta.total_profiles - meta.excluded_profiles}명",
+                        f"{meta.excluded_profiles}명",
+                    ],
+                }
+                st.table(pd.DataFrame(meta_data))
+
+            # 세그먼트별 상세
+            st.markdown("**👥 생성된 세그먼트**")
             seg_data = []
             for seg in ur.base_segments:
                 if seg.summary:
@@ -3537,6 +3627,7 @@ with tab_demo:
                     })
             if seg_data:
                 st.table(pd.DataFrame(seg_data))
+
             st.caption("⚡ 시나리오를 설정하면, 해당 시나리오 유형에 맞는 주요 변수만으로 세그먼트가 동적으로 재구성됩니다.")
 
         st.markdown('<div style="font-size:17px; font-weight:700; margin:0.5rem 0 0.4rem 0; color:#222;">2. 시나리오 설정</div>', unsafe_allow_html=True)
@@ -3613,17 +3704,60 @@ with tab_demo:
         st.markdown('<div style="font-size:17px; font-weight:700; margin:0.5rem 0 0.4rem 0; color:#222;">3. 실험 결과</div>', unsafe_allow_html=True)
 
         # 시나리오 세그먼트 안내
-        with st.expander("🔀 시나리오 맞춤 세그먼트 정보", expanded=False):
-            st.markdown(f"""
-            **시나리오 맞춤 세그먼트란?** 시나리오 유형에 따라 자동 도출된 주요 행동 변수만을 기반으로 K-Means 클러스터링을 재실행하여 생성된 세그먼트입니다.
-            기본 세그먼트(전체 변수 기반)와 달리, 해당 실험에 영향을 미치는 변수만으로 유저를 재분류하므로 실험 목적에 최적화된 분석이 가능합니다.
+        with st.expander("🔀 시나리오 맞춤 세그먼트 생성 과정", expanded=False):
+            st.markdown("**시나리오 맞춤 세그먼트란?** 시나리오 유형에 따라 자동 도출된 주요 행동 변수만을 기반으로 K-Means 클러스터링을 재실행하여 생성된 세그먼트입니다.")
+            st.markdown("기본 세그먼트(전체 변수 기반)와 달리, 해당 실험에 영향을 미치는 변수만으로 유저를 재분류하므로 **실험 목적에 최적화된 분석**이 가능합니다.")
+            st.markdown("")
 
-            - **도출된 주요 변수:** {', '.join(sim.key_variables)}
-            - **생성된 시나리오 세그먼트 수:** {sim.scenario_segment_count}개
-            - **시뮬레이션 트윈 수:** {sim.twin_count:,}명 (동일 트윈이 시나리오 A, B 모두 경험)
+            # 기본 vs 시나리오 세그먼트 비교
+            st.markdown("**🔄 기본 세그먼트 → 시나리오 세그먼트 변환 과정**")
+            ur = st.session_state.get("upload_result")
+            base_meta = ur.base_clustering_meta if ur else None
+            scenario_meta = sim.scenario_clustering_meta
+
+            st.markdown("""
+1. **주요 변수 자동 도출** — 시나리오 유형에 따라 실험 결과에 영향을 미치는 핵심 행동 변수를 자동으로 선정합니다.
+2. **피처 재구성** — 선정된 변수만으로 유저 프로파일을 재벡터화하고 표준화합니다.
+3. **재클러스터링** — 새로운 피처 공간에서 K-Means를 재실행하여 실험 목적에 맞는 세그먼트를 생성합니다.
+4. **트윈 배분** — 각 세그먼트 비율에 따라 디지털 트윈을 생성하고, 모든 트윈이 A/B 시나리오를 모두 경험합니다.
             """)
-            # 세그먼트별 요약
-            if report.segment_heatmap:
+
+            # 비교 테이블
+            compare_data = {
+                "항목": ["사용 변수", "변수 수", "그룹 수 (K)", "Silhouette Score"],
+                "기본 세그먼트": [
+                    "전환율, 이탈률, 세션 시간, 페이지뷰, 가격 민감도, 디바이스, OS" if not base_meta else "전체 행동 변수 (7종+원핫)",
+                    "14개 (원핫 인코딩 포함)" if not base_meta else f"{len(base_meta.feature_variables)}종",
+                    str(base_meta.optimal_k) if base_meta else str(ur.base_segment_count if ur else "?"),
+                    f"{base_meta.silhouette_score:.3f}" if base_meta else "-",
+                ],
+                "시나리오 세그먼트": [
+                    ", ".join(VARIABLE_KR_MAP.get(v, v) for v in sim.key_variables),
+                    f"{len(sim.key_variables)}개",
+                    str(scenario_meta.optimal_k) if scenario_meta else str(sim.scenario_segment_count),
+                    f"{scenario_meta.silhouette_score:.3f}" if scenario_meta else "-",
+                ],
+            }
+            st.table(pd.DataFrame(compare_data))
+
+            # 시나리오 세그먼트 상세
+            st.markdown("**👥 시나리오 맞춤 세그먼트 상세**")
+            if sim.scenario_segments:
+                scen_seg_data = []
+                for seg in sim.scenario_segments:
+                    if seg.summary:
+                        scen_seg_data.append({
+                            "세그먼트": seg.label,
+                            "멤버 수": seg.summary.member_count,
+                            "비율": f"{seg.summary.member_count / max(sum(s.summary.member_count for s in sim.scenario_segments if s.summary), 1) * 100:.1f}%",
+                            "평균 전환율": f"{seg.summary.avg_conversion_rate * 100:.1f}%",
+                            "평균 세션(초)": f"{seg.summary.avg_session_duration:.0f}",
+                            "이탈률": f"{seg.summary.avg_bounce_rate * 100:.1f}%",
+                            "주요 디바이스": seg.summary.primary_device,
+                        })
+                if scen_seg_data:
+                    st.table(pd.DataFrame(scen_seg_data))
+            elif report.segment_heatmap:
                 seg_info = []
                 for sa in report.segment_heatmap:
                     seg_info.append({
@@ -3632,6 +3766,8 @@ with tab_demo:
                         "최적 시나리오": "A" if sa.best_variant == "variant_a" else "B",
                     })
                 st.table(pd.DataFrame(seg_info))
+
+            st.markdown(f"🧬 **시뮬레이션 트윈 수:** {sim.twin_count:,}명 (동일 트윈이 시나리오 A, B 모두 경험)")
 
         # 자동 인사이트
         insights = generate_insights(report)
