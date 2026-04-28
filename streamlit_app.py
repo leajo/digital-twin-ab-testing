@@ -2834,6 +2834,13 @@ st.markdown("""
         font-size: 13px !important;
         line-height: 1.4 !important;
     }
+    /* st.table 전용 */
+    [data-testid="stTable"] td,
+    [data-testid="stTable"] th,
+    .stTable td, .stTable th {
+        font-size: 13px !important;
+        line-height: 1.4 !important;
+    }
     /* Streamlit dataframe 내부 (iframe 포함) */
     [data-testid="stDataFrame"] * {
         font-size: 13px !important;
@@ -3209,7 +3216,7 @@ with tab_guide:
             "이벤트 발생 시각 (예: 2024-01-15T10:30:00)",
         ],
     })
-    st.dataframe(required_fields, use_container_width=True, hide_index=True)
+    st.table(required_fields)
 
     with st.expander("선택 필드 및 CSV 예시"):
         optional_fields = pd.DataFrame({
@@ -3223,7 +3230,7 @@ with tab_guide:
                 "상품 카테고리",
             ],
         })
-        st.dataframe(optional_fields, use_container_width=True, hide_index=True)
+        st.table(optional_fields)
 
         st.code("""user_id,session_id,event_type,timestamp,page,device,os,category
 user_0001,sess_abc123,page_view,2024-01-15T10:30:00,/home,mobile,iOS,
@@ -3249,7 +3256,7 @@ user_0001,sess_abc123,purchase,2024-01-15T10:35:00,/order-complete,mobile,iOS,""
             "생성할 디지털 트윈 수 (100~10,000). 동일한 트윈이 A, B 모두 테스트",
         ],
     })
-    st.dataframe(settings_data, use_container_width=True, hide_index=True)
+    st.table(settings_data)
 
     st.markdown("""
     시나리오 유형을 선택하면 해당 유형에 맞는 **주요 행동 변수가 자동 도출**되고,
@@ -3278,7 +3285,7 @@ user_0001,sess_abc123,purchase,2024-01-15T10:35:00,/order-complete,mobile,iOS,""
             "각 세그먼트에서 더 높은 전환율을 보인 시나리오",
         ],
     })
-    st.dataframe(report_sections, use_container_width=True, hide_index=True)
+    st.table(report_sections)
 
     st.divider()
 
@@ -3529,7 +3536,7 @@ with tab_demo:
             wcr = report.weighted_conversion_rates.get(vid, 0)
             label = "시나리오 A" if vid == "variant_a" else "시나리오 B"
             metrics_data.append({"시나리오": label, "트윈 수": vr.total_twins, "전환 수": vr.conversions, "전환율 (%)": round(vr.conversion_rate * 100, 2), "가중 전환율 (%)": round(wcr * 100, 2), "평균 세션 (초)": round(vr.avg_session_duration, 1)})
-        st.dataframe(pd.DataFrame(metrics_data), use_container_width=True, hide_index=True)
+        st.table(pd.DataFrame(metrics_data))
 
         # 상세 분석 탭
         tab_seg, tab_tag, tab_funnel, tab_stats, tab_best = st.tabs(["세그먼트 비교", "태그 분석", "퍼널 비교", "통계 검정", "최적 시나리오"])
@@ -3644,7 +3651,7 @@ with tab_demo:
                             k = "A 전환율 (%)" if vid == "variant_a" else "B 전환율 (%)"
                             rates[k] = round(vr.conversion_rate * 100, 2)
                     best_data.append({"세그먼트": label, "최적 시나리오": best_label, **rates})
-                st.dataframe(pd.DataFrame(best_data), use_container_width=True, hide_index=True)
+                st.table(pd.DataFrame(best_data))
             else:
                 st.info("데이터가 없습니다.")
 
