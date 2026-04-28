@@ -2791,48 +2791,59 @@ st.markdown("""
         color: #3f51b5;
     }
 
-    /* 섹션 제목 — 대제목 축소 */
+    /* 섹션 제목 — 15px 통일 */
     .stMarkdown h1 {
-        font-size: 0.95rem;
+        font-size: 15px !important;
         font-weight: 700;
         margin-top: 0.4rem;
         margin-bottom: 0.3rem;
     }
     .stMarkdown h2, [data-testid="stHeadingWithActionElements"] {
-        font-size: 0.92rem;
+        font-size: 15px !important;
         font-weight: 700;
         margin-top: 0.3rem;
         margin-bottom: 0.25rem;
         letter-spacing: -0.3px;
     }
-    /* st.subheader / st.header 강제 축소 */
     [data-testid="stSubheader"], .stSubheader,
     [data-testid="stHeader"] {
-        font-size: 0.92rem !important;
+        font-size: 15px !important;
     }
     .stMarkdown h3 {
-        font-size: 0.95rem;
+        font-size: 14px !important;
         font-weight: 600;
         margin-top: 0.25rem;
         margin-bottom: 0.2rem;
     }
     .stMarkdown h4 {
-        font-size: 0.9rem;
+        font-size: 13px !important;
         font-weight: 600;
         margin-top: 0.2rem;
         margin-bottom: 0.15rem;
         color: #444;
     }
 
-    /* 본문 */
-    .stMarkdown p, [data-testid="stMarkdownContainer"] p {
-        font-size: 0.9rem;
-        line-height: 1.6;
-        margin-bottom: 0.5rem;
+    /* 본문 — 11px 통일 */
+    .stMarkdown p, [data-testid="stMarkdownContainer"] p,
+    .stMarkdown li, [data-testid="stMarkdownContainer"] li {
+        font-size: 11px !important;
+        line-height: 1.6 !important;
+        margin-bottom: 0.4rem;
     }
     td, th {
-        font-size: 0.85rem;
-        line-height: 1.4;
+        font-size: 11px !important;
+        line-height: 1.4 !important;
+    }
+    /* FAQ 내부 텍스트 */
+    .streamlit-expanderContent p,
+    .streamlit-expanderContent li,
+    [data-testid="stExpander"] p,
+    [data-testid="stExpander"] li {
+        font-size: 11px !important;
+        line-height: 1.6 !important;
+    }
+    .streamlit-expanderHeader, [data-testid="stExpander"] summary {
+        font-size: 12px !important;
     }
 
     /* 영역 간격 */
@@ -3057,7 +3068,7 @@ with tab_intro:
     st.divider()
 
     # How it works — 3-step flow
-    st.subheader("3스텝 사용 플로우")
+    st.subheader("데모 이용 플로우")
     col_s1, col_s2, col_s3 = st.columns(3)
     with col_s1:
         st.markdown("""
@@ -3141,7 +3152,7 @@ with tab_intro:
 # ══════════════════════════════════════════════
 with tab_guide:
     st.header("📖 이용 가이드")
-    st.markdown("TwinPilot을 사용하는 3단계 가이드입니다.")
+    st.markdown("TwinPilot 데모 기능을 이용하는 3단계 가이드입니다.")
     st.divider()
 
     # Step 1
