@@ -3093,6 +3093,67 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# 버튼/드롭다운 텍스트 상하 중앙 정렬 (추가 주입)
+st.markdown("""
+<style>
+    /* 모든 버튼 — 텍스트 완전 중앙 */
+    button, .stButton > button,
+    button[kind="primary"], button[kind="secondary"],
+    [data-testid="stBaseButton-primary"],
+    [data-testid="stBaseButton-secondary"],
+    [data-testid="stDownloadButton"] > button {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0.4rem 1rem !important;
+        line-height: 1 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 드롭다운 — 선택된 값 중앙 */
+    [data-baseweb="select"] > div:first-child {
+        display: flex !important;
+        align-items: center !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        min-height: 38px !important;
+    }
+    [data-baseweb="select"] [data-testid="stMarkdownContainer"],
+    [data-baseweb="select"] span[class] {
+        display: flex !important;
+        align-items: center !important;
+        line-height: 1 !important;
+    }
+
+    /* 인풋 필드 — 텍스트 중앙 */
+    input[type="text"], input[type="number"],
+    [data-baseweb="input"] input {
+        padding-top: 0.4rem !important;
+        padding-bottom: 0.4rem !important;
+        line-height: 1.4 !important;
+    }
+
+    /* 라디오 버튼 — 텍스트 중앙 */
+    [role="radiogroup"] label {
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    /* 체크박스 — 텍스트 중앙 */
+    .stCheckbox label > div {
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    /* 파일 업로더 버튼 */
+    [data-testid="stFileUploader"] button {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 
 # ──────────────────────────────────────────────
 # 탭 구성
